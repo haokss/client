@@ -19,18 +19,17 @@ module.exports = {
       // 允许连接的主机名或 IP 地址
       "all"
     ],
-    proxy:{
-      '/api':{
-        target:'http://43.143.200.197:8878',
-        changeOrigin: true,
-        ws: true,
-        secure: true,
-        pathRewrite:{
-          '^/api': ''
-        }
-      }
-  
-    }
+    port: 8888,
+    // proxy:{
+    //   '/api':{
+    //     target:'http://127.0.0.1:8888',
+    //     changeOrigin: true,
+    //     ws: true,
+    //     secure: true,
+    //     pathRewrite:{
+    //       '^/api': ''
+    //     }
+    //   }
+    // }
   },
-
 }

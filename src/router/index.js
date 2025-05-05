@@ -3,6 +3,7 @@ import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Notfound from "../views/404.vue";
 import User from "../views/User.vue"
+
 const routes = [
   {
     path: '/login',
@@ -27,27 +28,57 @@ const routes = [
     children:[
       {
         path:'/home_page',
-        name:'/home_page',
+        name:'home_page',
         component: () => import('@/views/home_page')
       },
       {
-        path:'/img',
-        name:'/img',
-        component: () => import('@/views/img_detect')
+        path:'/image',
+        name:'image',
+        component: () => import('@/views/file_manager/image')
       },
       {
         path:'/connect',
-        name:'/connect',
+        name:'connect',
         component: () => import('@/views/connect')
       },      
       {
-        path:'/other',
-        name:'/other',
-        component: () => import('@/views/other')
+        path:'/task',
+        name:'task',
+        component: () => import('@/views/task'),
+      },
+      {
+        path:'/relative',
+        name:'relative',
+        component: () => import('@/views/relative')
+      },
+      {
+        path:'/colleague',
+        name:'colleague',
+        component: () => import('@/views/colleague')
+      },
+      {
+        path:'/classmate',
+        name:'classmate',
+        component: () => import('@/views/classmate')
+      },
+      {
+        path:'/friend',
+        name:'friend',
+        component: () => import('@/views/friend')
+      },
+      {
+        path:'/bill',
+        name:'bill',
+        component: () => import('@/views/bill')
+      },
+      {
+        path:'/timing_task',
+        name:'timing_task',
+        component: () => import('@/views/timing_task'),
       },
       {
         path:'/about',
-        name:'/about',
+        name:'about',
         component: () => import('@/views/about')
       }
     ]
@@ -62,7 +93,7 @@ const routes = [
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
+  routes,
 })
 
 export default router

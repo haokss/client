@@ -13,10 +13,33 @@
             
           </template> 
             <el-menu-item index="/">首页</el-menu-item>
-            <el-menu-item index="img">图片推断</el-menu-item>
-            <el-menu-item index="connect">连接小车</el-menu-item>
-            <el-menu-item index="other">其它</el-menu-item>
-
+            <el-sub-menu index="1-1">
+              <template #title>任务管理</template>
+            <el-menu-item index="task">计划活动</el-menu-item>
+            <el-menu-item index="timing_task">定时活动</el-menu-item>
+            <el-menu-item index="timing_task">活动统计</el-menu-item>
+            </el-sub-menu>
+            <el-sub-menu index="2-1">
+              <template #title>关系管理</template>
+              <el-menu-item index="relative">亲属管理</el-menu-item>
+              <el-menu-item index="colleague">同事管理</el-menu-item>
+              <el-menu-item index="friend">朋友管理</el-menu-item>
+              <el-menu-item index="classmate">同学管理</el-menu-item>
+            </el-sub-menu>
+            <el-sub-menu index="3-1">
+              <template #title>账单管理</template>
+              <el-menu-item index="bill">账单信息</el-menu-item>
+              <el-menu-item index="colleague">账单报表</el-menu-item>
+            </el-sub-menu>
+            <el-sub-menu index="4-1">
+              <template #title>文件管理</template>
+              <el-menu-item index="image">图片管理</el-menu-item>
+              <el-menu-item index="video">视频管理</el-menu-item>
+            </el-sub-menu>
+            <!-- <el-menu-item index="">日记</el-menu-item> -->
+            <!-- <el-menu-item index="">文件管理</el-menu-item> -->
+            <!-- <el-menu-item index="">账号管理</el-menu-item> -->
+            <el-menu-item index="">地图</el-menu-item>       
           <!-- <el-sub-menu index="1-4">
             <template #title>item four</template>
             <el-menu-item index="1-4-1">item one</el-menu-item>
@@ -30,7 +53,6 @@
 </template>
 
 <script>
-
-
+// import { Location, Setting } from '@element-plus/icons-vue'
 
 </script>

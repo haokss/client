@@ -45,7 +45,7 @@ import { ElMessage } from 'element-plus'
   color: #fff;
   font-size: 24px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 

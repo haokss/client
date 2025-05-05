@@ -3,7 +3,7 @@
     <el-upload
     class="upload-demo"
     drag
-    action="http://43.143.200.197:8878/api/yolov5/test"
+    action="{{apiBaseUrlapi}}/yolov5/test"
     method= 'POST'
     name="img"
     :on-success="handleSuccess"
@@ -36,7 +36,6 @@
         </el-image>
         </div>
     </div>
-
         <el-table :data="detectList.value" height="250" style="width: 100%">
         <el-table-column prop="img_name" label="图片名" width="180" />
         <el-table-column prop="object" label="object" width="180" />
@@ -48,11 +47,14 @@
 
 <script setup>
 import router from '@/router';
-import { reactive,ref } from 'vue'
+import { reactive,ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { Picture as IconPicture } from '@element-plus/icons-vue'
+
+const apiBaseUrl = computed(() => process.env.VUE_APP_API_BASE_URL);
+
 // 用户推断表单数据
 const detectList = reactive([])
 
@@ -88,6 +90,8 @@ const handleDes=()=>{
   router.replace('/login')
    .catch(error => ElMessage.error(`登录失败: ${error.message}`));
 }
+
+
 // //用户基本信息
 // const initBaseList = async()=>{
 //   baseList.value= await (await user_Base()).data

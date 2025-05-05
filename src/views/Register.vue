@@ -46,14 +46,10 @@ const formRef = ref(null)
 
 // 登录方法，获取 session_id 并存储到 sessionStorage 中
 function handleRegister (){
-    axios.post('http://43.143.200.197:8878/api/register', form.value)
+    axios.post('http://127.0.0.1:8888/api/register', form.value)
         .then(response => {
         const { data, headers } = response;
         if (data.code === 201) {
-            // const session_id = getSessionIdFromHeaders(headers);
-            //设置了空的session_id,通过白名单验证
-            // sessionStorage.setItem('session_id', data.session_id);
-            // console.log('登录成功，session_id: ', session_id);
             ElMessage.success(data.msg)
             router.replace('/login')   
         } else {

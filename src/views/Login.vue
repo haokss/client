@@ -4,9 +4,9 @@
         <div class="title-container">
           <h3 class="title">用户登陆</h3>
         </div>
-        <el-form-item label="用户名:" prop="username" class="styled-input">
+        <el-form-item label="用户名:" prop="user_name" class="styled-input">
         <svg-icon class="svg-container" icon="user"></svg-icon>
-        <el-input v-model="form.username" />
+        <el-input v-model="form.user_name" />
         </el-form-item>
 
         <el-form-item label="密码:" prop="password" class="styled-input"  >
@@ -25,49 +25,39 @@
 
 <script setup >
 // import { Login} from "@/api/login";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 // import { useStore } from "vuex";
 import router from "@/router";
 import axios from "axios";
 import { ElMessage } from 'element-plus'
 
-
-const request = axios.create({
-    baseURL:"http://43.143.200.197",
-    timeout:5000,
-})
-// const store = useStore()
-
 const form =ref({
-    username:'',
+    user_name:'',
     password:''
 })
+
 const rules =ref({
-    username: [
+    user_name: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 6, max: 12, message: '用户名长度在6-12之间', trigger: 'blur' },
+    // { min: 5, max: 12, message: '用户名长度在5-12之间', trigger: 'blur' },
   ],
     password: [
         { required: true, message: '请输入密码', trigger: 'blur' }
     ],    
 })
 
-//http://43.143.200.197:8878/api/login
 // 登录方法，获取 session_id 并存储到 sessionStorage 中
 function handleLogin (){
-  axios.post('http://localhost:8080/api/login', form.value)
+  axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/user/login`, form.value)
     .then(response => {
       const { data, headers } = response;
       if (data.code === 200) {
-        // const session_id = getSessionIdFromHeaders(headers);
-        //设置了空的session_id,通过白名单验证
-
-        sessionStorage.setItem('session_id', data.session_id.username);
-        sessionStorage.setItem('user_base_info', JSON.stringify(data.user_base_info));
-
-        // console.log('登录成功，session_id: ', session_id);
+        //设置token
+        sessionStorage.setItem('token', data.data.token);
         ElMessage.success(data.msg)
-        router.replace('/')   
+        console.log('登录成功，准备跳转');
+        router.replace('/');
+        console.log('跳转完成'); 
       } else {
         ElMessage.error(data.msg)
       }
@@ -88,19 +78,6 @@ const changeType = ()=>{
     }
 }
 
-// // 从响应头中解析 session_id
-// function getSessionIdFromHeaders(headers) {
-//   console.log("headers:`",headers)
-//   const cookie = headers['set-ookie'];
-//   console.log("cookie:",cookie)
-//   if (cookie) {
-//     const matches = cookie[0].match(/session_id=(\w+)/);
-//     if (matches) {
-//       return matches[1];
-//     }
-//   }
-//   console.error('无法解析 session_id');
-// }
 </script>
 <style scoped>
 .login {

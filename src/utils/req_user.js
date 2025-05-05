@@ -2,7 +2,7 @@ import axios from "axios";
 import { ElMessage } from 'element-plus'
 import router from "@/router";
 const request = axios.create({
-    baseURL:"http://43.143.200.197:8878",
+    baseURL:`${process.env.VUE_APP_API_BASE_URL}`,
     timeout:5000,
 })
 //响应请求拦截器
@@ -14,7 +14,6 @@ request.interceptors.response.use((response)=>{
         return data
     }else{
         ElMessage.error(data.msg)
-        // return Promise.reject(new Error(data.message))
     }
 },error=>{
     console.log(error)

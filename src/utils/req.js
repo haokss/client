@@ -1,6 +1,6 @@
 import axios from "axios";
 const request = axios.create({
-    baseURL:"http://43.143.200.197:8878",
+    baseURL:`${process.env.VUE_APP_API_BASE_URL}`,
     timeout:5000,
 })
 //添加拦截请求

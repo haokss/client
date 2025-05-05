@@ -1,19 +1,31 @@
 <template>
-    <div>
-        <div class="block text-center">
-            <el-carousel height="240px">
-            <el-carousel-item v-for="item in carouseData" :key="item">
-                <img :src="item.url" alt=""/>
-            </el-carousel-item>
-            </el-carousel>
-        </div>
-    </div>
+  <div>
+      <div class="block text-center">
+          <el-carousel height="240px">
+          <el-carousel-item v-for="item in carouseData" :key="item">
+              <img :src="item.url" alt=""/>
+          </el-carousel-item>
+          </el-carousel>
+      </div>
+  </div>
+
+  <el-calendar>
+    <template #date-cell="{ data }">
+      <p :class="data.isSelected ? 'is-selected' : ''">
+        {{ data.day.split('-').slice(1).join('-') }}
+        {{ data.isSelected ? '✔️' : '' }}
+      </p>
+    </template>
+  </el-calendar>
+
 </template>
 
 
 
 <script setup>
-
+import { ref } from 'vue'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+const value = ref(new Date())
 const carouseData = [
   {url: require("@/assets/001.jpg")},
   {url: require("@/assets/002.jpg")},
@@ -23,6 +35,10 @@ const carouseData = [
 </script>
 
 <style scoped>
+.is-selected {
+  color: #1989fa;
+}
+
 .demonstration {
   color: var(--el-text-color-secondary);
 }
