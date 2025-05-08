@@ -254,12 +254,7 @@ onMounted(() => {
   eventSource = initSSE();
 });
 
-// 组件卸载时关闭连接
-// onBeforeUnmount(() => {
-//   if (eventSource) {
-//     eventSource.close();
-//   }
-// });
+
 // 计算未读数量
 const unreadCount = computed(() => {
   return messages.value.filter(msg => !msg.read).length;

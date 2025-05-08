@@ -77,9 +77,19 @@ const routes = [
         component: () => import('@/views/timing_task'),
       },
       {
-        path:'/about',
-        name:'about',
-        component: () => import('@/views/about')
+        path:'/task_statistics',
+        name:'task_statistics',
+        component: () => import('@/views/task_statistics'),
+      },
+      {
+        path:'/map_view',
+        name:'map_view',
+        component: () => import('@/views/map_view'),
+      },
+      {
+        path:'/setting',
+        name:'setting',
+        component: () => import('@/views/setting')
       }
     ]
   },

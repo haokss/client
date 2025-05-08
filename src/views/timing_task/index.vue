@@ -59,9 +59,8 @@
         </template>
       </el-table-column>
       <el-table-column fixed="right" label="操作" min-width="120">
-        <template #default>
-          <el-button link type="primary" size="small" @click="handleClick">详情</el-button>
-          <el-button link type="primary" size="small">编辑</el-button>
+        <template #default="scope">
+          <el-button link type="primary" size="small" @click="editTask(scope.row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -80,7 +79,7 @@
       @current-change="handleCurrentChange"
     />
   </div>
-    <el-drawer v-model="drawerVisible" title="新建定时活动" size="50%" :with-header="true">
+    <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑定时活动' : '新建定时活动'" size="50%" :with-header="true">
     <el-form :model="form" label-width="auto" style="max-width: 600px">
       <el-form-item label="任务名称">
         <el-input v-model="form.name" />
@@ -90,20 +89,48 @@
       </el-form-item>
       <el-form-item label="开始时间">
         <el-col :span="11">
-          <el-date-picker v-model="form.start_date" type="date" placeholder="选择日期" style="width: 100%" />
+          <el-date-picker
+            v-model="form.start_date"
+            type="date"
+            placeholder="选择日期"
+            style="width: 100%"
+            :disabled-date="disablePastDates"
+          />
         </el-col>
         <el-col :span="2" class="text-center">-</el-col>
         <el-col :span="11">
-          <el-time-picker v-model="form.start_time" placeholder="选择小时" style="width: 100%" format="HH:mm" />
+          <el-time-picker
+            v-model="form.start_time"
+            placeholder="选择小时"
+            style="width: 100%"
+            format="HH:mm"
+            :disabled-hours="disablePastHours"
+            :disabled-minutes="disablePastMinutes"
+            :disabled-seconds="() => []"
+          />
         </el-col>
       </el-form-item>
       <el-form-item label="结束时间">
         <el-col :span="11">
-          <el-date-picker v-model="form.end_date" type="date" placeholder="选择日期" style="width: 100%" />
+          <el-date-picker
+            v-model="form.end_date"
+            type="date"
+            placeholder="选择日期"
+            style="width: 100%"
+            :disabled-date="disableBeforeStartDate"
+          />
         </el-col>
         <el-col :span="2" class="text-center">-</el-col>
         <el-col :span="11">
-          <el-time-picker v-model="form.end_time" placeholder="选择小时" style="width: 100%" format="HH:mm" />
+          <el-time-picker
+            v-model="form.end_time"
+            placeholder="选择小时"
+            style="width: 100%"
+            format="HH:mm"
+            :disabled-hours="disableBeforeStartHours"
+            :disabled-minutes="disableBeforeStartMinutes"
+            :disabled-seconds="() => []"
+          />
         </el-col>
       </el-form-item>
       <el-form-item label="类型">
@@ -253,7 +280,7 @@ const fetchTasks = async () => {
 const formatTime = (isoString) => {
   if (!isoString) return '--'
   // 将UTC时间转换为本地时间
-  return dayjs(isoString).utc().local().format('YYYY-MM-DD HH:mm:ss')
+  return dayjs(isoString).utc().local().format('YYYY-MM-DD HH:mm')
 }
 
 // -------------------------过滤方法
@@ -279,7 +306,7 @@ onMounted(() => {
   fetchTasks()
 })
 
-// -----------------------------新建任务
+// -------------------------------------------新建任务
 const createTask = () => {
   drawerVisible.value = true  // 打开抽屉
 }
@@ -287,41 +314,87 @@ const createTask = () => {
 // 点击提交
 const onSubmit = async () => {
   try {
-    // 格式化开始时间和结束时间
     const startTime = formatLocalDateTime(form.start_date, form.start_time)
     const endTime = formatLocalDateTime(form.end_date, form.end_time)
     if (!startTime || !endTime) {
       ElMessage.error('开始/结束时间格式错误')
       return
     }
-    // 构造请求体数据
+
     const data = {
-        title: form.name,        // 任务名称
-        content: form.desc,      // 任务内容
-        notify_way: form.notify_way, // 提醒方式
-        early_time: form.early_time, 
-        start_time: startTime, // 开始时间
-        end_time: endTime, // 结束时间
-        type: form.type, // 任务类型
+      title: form.name,
+      content: form.desc,
+      notify_way: form.notify_way,
+      early_time: form.early_time,
+      start_time: startTime,
+      end_time: endTime,
+      type: form.type,
     }
-    // 发起 POST 请求
-    const token = sessionStorage.getItem('token') // 假设你存储了用户的 token
-    const response = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/timing_task`, data, {
-      headers: {
-        'Authorization': `${token}`,  // 使用 Bearer token 进行身份验证
-      },
-    })
-    // 处理响应
-    if (response.data.code === 200) {
-      ElMessage.success('任务创建成功!')
-      fetchTasks()
-      drawerVisible.value = false 
+
+    const token = sessionStorage.getItem('token')
+    let response
+
+    if (isEditMode.value && editingTaskId.value) {
+      // 编辑任务
+      response = await axios.put(`${process.env.VUE_APP_API_BASE_URL}/api/v1/timing_task/${editingTaskId.value}`, data, {
+        headers: { Authorization: `${token}` },
+      })
     } else {
-      ElMessage.error('任务创建失败')
+      // 新建任务
+      response = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/timing_task`, data, {
+        headers: { Authorization: `${token}` },
+      })
+    }
+
+    if (response.data.code === 200) {
+      ElMessage.success(isEditMode.value ? '任务更新成功!' : '任务创建成功!')
+      fetchTasks()
+      drawerVisible.value = false
+      resetForm()
+    } else {
+      ElMessage.error((isEditMode.value ? '任务更新失败' : '任务创建失败'))
     }
   } catch (error) {
-    ElMessage.error('提交任务失败: ' + error.message)
+    ElMessage.error('提交失败: ' + error.message)
   }
+}
+
+//----------------------------------------编辑定时任务
+const isEditMode = ref(false)
+const editingTaskId = ref(null)
+
+const editTask = (row) => {
+  isEditMode.value = true
+  editingTaskId.value = row.id
+
+  // 分拆开始时间和结束时间
+  const start = dayjs(row.start_time)
+  const end = dayjs(row.end_time)
+
+  form.name = row.name
+  form.early_time = row.early_time
+  form.start_date = start.toDate()
+  form.start_time = start.toDate()
+  form.end_date = end.toDate()
+  form.end_time = end.toDate()
+  form.type = row.type
+  form.desc = row.content
+
+  drawerVisible.value = true
+}
+
+
+const resetForm = () => {
+  form.name = ''
+  form.early_time = 0
+  form.start_date = null
+  form.start_time = null
+  form.end_date = null
+  form.end_time = null
+  form.type = 0
+  form.desc = ''
+  isEditMode.value = false
+  editingTaskId.value = null
 }
 
 // 格式化日期时间为带有时区的时间字符串
@@ -391,16 +464,63 @@ const deleteSelectedTasks = async () => {
   }
 }
 
-// -----------------------------------其它
-const showDetail = (row) => {
-  // 查看详情逻辑
-  console.log('查看详情:', row)
+// -------------------------------------------时间选中限制
+const disablePastDates = (date) => {
+  return date < new Date().setHours(0, 0, 0, 0)
 }
 
-const editTask = (row) => {
-  // 编辑任务逻辑
-  console.log('编辑任务:', row)
+const disablePastHours = () => {
+  const now = new Date()
+  const selectedDate = form.start_date
+  if (dayjs(selectedDate).isSame(dayjs(), 'day')) {
+    const hours = []
+    for (let i = 0; i < now.getHours(); i++) {
+      hours.push(i)
+    }
+    return hours
+  }
+  return []
 }
+
+const disablePastMinutes = (hour) => {
+  const now = new Date()
+  const selectedDate = form.start_date
+  if (dayjs(selectedDate).isSame(dayjs(), 'day') && hour === now.getHours()) {
+    const minutes = []
+    for (let i = 0; i < now.getMinutes(); i++) {
+      minutes.push(i)
+    }
+    return minutes
+  }
+  return []
+}
+
+const disableBeforeStartDate = (date) => {
+  return date < form.start_date
+}
+
+const disableBeforeStartHours = () => {
+  const start = dayjs(form.start_date).isSame(form.end_date, 'day') ? dayjs(form.start_time).hour() : 0
+  const hours = []
+  for (let i = 0; i < start; i++) {
+    hours.push(i)
+  }
+  return hours
+}
+
+const disableBeforeStartMinutes = (hour) => {
+  const startHour = dayjs(form.start_time).hour()
+  const startMinute = dayjs(form.start_time).minute()
+  if (hour === startHour) {
+    const minutes = []
+    for (let i = 0; i < startMinute; i++) {
+      minutes.push(i)
+    }
+    return minutes
+  }
+  return []
+}
+
 </script>
 
 

@@ -5,7 +5,7 @@
       <div style="display: flex; gap: 10px; flex-wrap: wrap">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索任务名称或内容"
+          placeholder="搜索活动名称或内容"
           clearable
           @input="handleSearch"
           style="width: 200px"
@@ -19,12 +19,12 @@
           unlink-panels
           value-format="YYYY-MM-DD"
         />
-        <el-select v-model="statusFilter" placeholder="任务状态" style="width: 120px" clearable>
+        <el-select v-model="statusFilter" placeholder="活动状态" style="width: 120px" clearable>
           <el-option label="未完成" :value="0" />
           <el-option label="已完成" :value="1" />
         </el-select>
       </div>
-      <el-button type="primary" @click="drawerVisible = true">新建任务</el-button>
+      <el-button type="primary" @click="drawerVisible = true">新建活动</el-button>
     </div>
 
     <!-- 固定高度卡片区域 + 分页 -->
@@ -37,11 +37,13 @@
               <el-tag :type="task.status === 0 ? 'warning' : 'success'" size="small">
                 {{ task.status === 0 ? '未完成' : '已完成' }}
               </el-tag>
+              <el-tag v-if="isOverdue(task)" type="danger" size="small">逾期</el-tag>
             </div>
             <div class="task-content">{{ task.content }}</div>
             <div class="task-footer">
               <span class="task-date">{{ task.date }}</span>
               <div>
+                <el-button link size="small" @click="viewTask(task)">编辑</el-button>
                 <el-button link size="small" @click="deleteTask(task)">删除</el-button>
               </div>
             </div>
@@ -62,25 +64,62 @@
       @current-change="handleCurrentChange"
     />
 
-    <!-- 新建任务抽屉 -->
-    <el-drawer v-model="drawerVisible" title="新建任务" direction="rtl" size="40%">
+    <!-- 新建活动抽屉 -->
+    <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑活动' : '新建活动'" direction="rtl" size="40%">
       <el-form :model="form" label-width="100px">
-        <el-form-item label="任务名称">
-          <el-input v-model="form.name" placeholder="请输入任务名称" />
+        <el-form-item label="活动名称">
+          <el-input v-model="form.name" placeholder="请输入活动名称" />
         </el-form-item>
         <el-form-item label="计划时间">
           <el-date-picker
             v-model="form.date"
-            type="datetime"
+            type="date"
             placeholder="选择时间"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="任务状态">
+        <el-form-item label="结束时间">
+          <el-date-picker
+            v-model="form.endTime"
+            type="date"
+            placeholder="选择结束时间（不选则为开始时间）"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="优先级">
+          <div style="width: 100%">
+            <el-slider
+              v-model="form.priority"
+              :min="0"
+              :max="5"
+              show-stops
+              :marks="{
+                0: '最高',
+                1: '高',
+                2: '中高',
+                3: '中',
+                4: '中低',
+                5: '最低'
+              }"
+            />
+            <div style="text-align: right; font-size: 12px; color: #999;">（0 为最高优先级，5 为最低优先级）</div>
+          </div>
+        </el-form-item>
+        <el-form-item label="活动状态">
           <el-switch v-model="form.status" active-text="已完成" inactive-text="未完成" />
         </el-form-item>
-        <el-form-item label="任务内容">
-          <el-input v-model="form.desc" type="textarea" placeholder="请输入任务内容" />
+        <el-form-item label="活动内容">
+          <el-input v-model="form.desc" type="textarea" placeholder="请输入活动内容" />
+        </el-form-item>
+        <el-form-item label="是否提醒">
+        <el-switch v-model="form.isNotify" active-text="开启" inactive-text="关闭" />
+        </el-form-item>
+
+        <el-form-item label="提醒方式">
+          <el-select v-model="form.notifyWay" placeholder="选择提醒方式" style="width: 100%" :disabled="!form.isNotify">
+            <el-option label="站内信" :value="0" />
+            <el-option label="邮件" :value="1" />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="onSubmit">提交</el-button>
@@ -104,10 +143,15 @@ const searchKeyword = ref('')
 const drawerVisible = ref(false)
 
 const form = reactive({
+  id: null,
   name: '',
-  date: '',
+  date: '',       // StartTime
+  endTime: '',    // 新增
   status: false,
   desc: '',
+  priority: 5,    // 新增
+  isNotify: false, // 新增，用布尔值表示
+  notifyWay: 0,   // 新增
 })
 
 const dateRange = ref([])
@@ -129,11 +173,12 @@ const fetchTasks = async () => {
         content: item.content,
         status: item.code,
         date: formatTimestamp(item.create_time),
+        endTime: item.end_time,  // 新增，秒级时间戳
       }))
       total.value = response.data.data.total
     }
   } catch (error) {
-    ElMessage.error('获取任务失败: ' + error.message)
+    ElMessage.error('获取活动失败: ' + error.message)
   }
 }
 
@@ -160,37 +205,63 @@ const filteredTasks = computed(() => {
   })
 })
 
-// 分页后的任务
+// 分页后的活动
 const pagedTasks = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return filteredTasks.value.slice(start, end)
 })
 
+// --------------------------------------------------新增和修改活动提交
 const onSubmit = async () => {
   const token = sessionStorage.getItem('token')
-  if (!form.name || !form.desc) return ElMessage.warning('请填写任务名称和内容')
+  if (!form.name || !form.desc) return ElMessage.warning('请填写活动名称和内容')
 
   const data = {
-    title: form.name,
-    content: form.desc,
-    code: form.status ? 1 : 0,
+      title: form.name,
+      content: form.desc,
+      code: form.status ? 1 : 0,
+      priority: form.priority,
+      is_notify: form.isNotify ? 1 : 0,
+      notify_way: form.notifyWay,
+      start_time: Math.floor(new Date(form.date).setHours(0, 0, 0, 0) / 1000),
+      end_time: form.endTime
+        ? Math.floor(new Date(form.endTime).setHours(0, 0, 0, 0) / 1000)
+        : Math.floor(new Date(form.date).setHours(0, 0, 0, 0) / 1000),
   }
 
   try {
-    const response = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/task`, data, {
-      headers: { Authorization: token },
-    })
+    let response
+    if (isEditMode.value && form.id) {
+      response = await axios.put(`${process.env.VUE_APP_API_BASE_URL}/api/v1/task/${form.id}`, data, {
+        headers: { Authorization: token },
+      })
+    } else {
+      response = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/task`, data, {
+        headers: { Authorization: token },
+      })
+    }
+
     if (response.data.code === 200) {
-      ElMessage.success('创建成功')
+      ElMessage.success(isEditMode.value ? '更新成功' : '创建成功')
       drawerVisible.value = false
+      resetForm()
       fetchTasks()
     } else {
-      ElMessage.error('创建失败')
+      ElMessage.error((isEditMode.value ? '更新失败：' : '创建失败：') + response.data.message)
     }
   } catch (err) {
     ElMessage.error('提交出错: ' + err.message)
   }
+}
+
+const resetForm = () => {
+  form.id = null
+  form.name = ''
+  form.date = ''
+  form.status = false
+  form.desc = ''
+  isEditMode.value = false
 }
 
 const handleSizeChange = (val) => {
@@ -201,7 +272,7 @@ const handleCurrentChange = (val) => {
 }
 
 const deleteTask = async (task) => {
-  ElMessageBox.confirm(`确认删除任务「${task.name}」吗？`, '删除确认', {
+  ElMessageBox.confirm(`确认删除活动「${task.name}」吗？`, '删除确认', {
     confirmButtonText: '删除',
     cancelButtonText: '取消',
     type: 'warning',
@@ -224,6 +295,43 @@ const deleteTask = async (task) => {
 }
 
 onMounted(fetchTasks)
+
+//---------------------------------------编辑活动
+const isEditMode = ref(false)  // 判断是新建还是编辑
+
+const viewTask = async (task) => {
+  const token = sessionStorage.getItem('token')
+  try {
+    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/task/${task.id}`, {
+      headers: { Authorization: token },
+    })
+    if (response.data.code === 200) {
+      const data = response.data.data
+      form.id = data.id
+      form.name = data.title
+      form.date = new Date(data.create_time * 1000)  // 注意转换时间戳
+      form.status = data.code === 1
+      form.desc = data.content
+      form.priority = data.priority ?? 5
+      form.isNotify = data.is_notify === 1
+      form.notifyWay = data.notify_way ?? 0
+      form.endTime = data.end_time ? new Date(data.end_time * 1000) : new Date(data.create_time * 1000)
+      isEditMode.value = true
+      drawerVisible.value = true
+    } else {
+      ElMessage.error('获取活动详情失败：' + response.data.message)
+    }
+  } catch (error) {
+    ElMessage.error('请求失败：' + error.message)
+  }
+}
+
+//-------------------------------------逾期判断函数
+const isOverdue = (task) => {
+  const now = Math.floor(Date.now() / 1000)  // 当前时间（秒）
+  return task.status === 0 && task.endTime && now > task.endTime
+}
+
 </script>
 
 <style scoped>

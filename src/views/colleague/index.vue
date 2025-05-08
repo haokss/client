@@ -9,11 +9,20 @@
           <el-button type="primary" :loading="loading" @click="onSearch">搜索</el-button>
           <el-button @click="resetSearch">重置</el-button>
         </div>
-        <el-button type="success" @click="openDrawer()">+ 添加同事</el-button>
+        <el-button @click="openDrawer">添加同事</el-button>
+        <el-button plain :disabled="!multipleSelection.length" @click="batchRemove">批量删除</el-button>
       </div>
 
       <!-- 表格 -->
-      <el-table :data="tableData" stripe border v-loading="loading">
+      <el-table
+        ref="tableRef"
+        :data="tableData"
+        stripe
+        v-loading="loading"
+        row-key="ID"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="40" />
         <el-table-column label="姓名" prop="name" />
         <el-table-column label="工作单位" prop="company" />
         <el-table-column label="职位" prop="position" />
@@ -75,15 +84,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
+const tableRef = ref()
 const tableData = ref([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = 10
 const loading = ref(false)
+const multipleSelection = ref([])
+
+const handleSelectionChange = (val) => {
+  multipleSelection.value = val
+  console.log('当前选中项:', val)
+}
 
 const search = ref({
   name: '',
@@ -122,6 +138,9 @@ const fetchData = async () => {
 
     tableData.value = res.data?.data?.list || []
     total.value = res.data?.data?.total || 0
+
+    await nextTick()
+    tableRef.value?.clearSelection()
   } catch (err) {
     ElMessage.error('获取数据失败: ' + (err.response?.data?.message || err.message))
     if (err.response?.status === 401) {
@@ -181,12 +200,50 @@ const submit = () => {
         if (index > -1) tableData.value[index] = { ...form.value }
         ElMessage.success('更新成功')
       }
+
+      await nextTick()
+      tableRef.value?.clearSelection()
+
       drawerVisible.value = false
     } catch (err) {
       ElMessage.error('提交失败')
       console.error(err)
     }
   })
+}
+
+const batchRemove = async () => {
+  if (multipleSelection.value.length === 0) {
+    return ElMessage.warning('请至少选择一项')
+  }
+
+  try {
+    await ElMessageBox.confirm(`确认删除选中的 ${multipleSelection.value.length} 项吗？`, '提示', {
+      type: 'warning',
+    })
+
+    const token = sessionStorage.getItem('token')
+    const ids = multipleSelection.value.map(item => item.ID)
+
+    const res = await axios.delete(`${process.env.VUE_APP_API_BASE_URL}/api/v1/colleague/batch`, {
+      headers: { 
+        Authorization: token,
+        'Content-Type': 'application/json' 
+      },
+      data: { ids }
+    })
+
+    if (res.data.code === 200) {
+      ElMessage.success('删除成功')
+      fetchData()
+      multipleSelection.value = []
+    }
+  } catch (err) {
+    if (err !== 'cancel') {
+      console.error('删除失败:', err)
+      ElMessage.error(err.response?.data?.message || '删除失败')
+    }
+  }
 }
 
 const remove = async (id) => {

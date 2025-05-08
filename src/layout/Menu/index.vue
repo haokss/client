@@ -17,7 +17,7 @@
               <template #title>任务管理</template>
             <el-menu-item index="task">计划活动</el-menu-item>
             <el-menu-item index="timing_task">定时活动</el-menu-item>
-            <el-menu-item index="timing_task">活动统计</el-menu-item>
+            <el-menu-item index="task_statistics">活动统计</el-menu-item>
             </el-sub-menu>
             <el-sub-menu index="2-1">
               <template #title>关系管理</template>
@@ -39,15 +39,15 @@
             <!-- <el-menu-item index="">日记</el-menu-item> -->
             <!-- <el-menu-item index="">文件管理</el-menu-item> -->
             <!-- <el-menu-item index="">账号管理</el-menu-item> -->
-            <el-menu-item index="">地图</el-menu-item>       
+            <el-menu-item index="map_view">地图</el-menu-item>       
           <!-- <el-sub-menu index="1-4">
             <template #title>item four</template>
             <el-menu-item index="1-4-1">item one</el-menu-item>
           </el-sub-menu> -->
 
-        <el-menu-item index="about">
-          <el-icon><setting /></el-icon>
-          <span>关于</span>
+        <el-menu-item index="setting">
+          <!-- <el-icon><setting /></el-icon> -->
+          <span>设置</span>
         </el-menu-item>
       </el-menu>
 </template>
