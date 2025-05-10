@@ -2,7 +2,7 @@
     <div class="common-layout">
       <el-container>
         <el-aside width="220px">
-          <Menu></Menu>
+          <Menu :isAdmin="isAdmin" />
         </el-aside>
         <el-container>
 
@@ -26,6 +26,9 @@ import Menu from './Menu'
 import Header from './Header'
 import { reactive,ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getUserRole } from '@/utils/auth';  // 获取用户角色
+
+const isAdmin = getUserRole() === 'admin';  // 判断是否是管理员
 
 </script>
 

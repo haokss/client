@@ -5,7 +5,7 @@
           <h3 class="title">用户注册</h3>
         </div>
         <el-form-item label="用户名:" prop="username">
-          <el-input v-model="form.username" class="styled-input" />
+          <el-input v-model="form.user_name" class="styled-input" />
         </el-form-item>
         <el-form-item label="密码: " prop="password">
             <el-input v-model="form.password" :type="passwordType" class="styled-input" />
@@ -32,13 +32,13 @@ import axios from "axios";
 import { ElMessage } from 'element-plus'
 
 const form =ref({
-    username:'',
+    user_name:'',
     password:'',
     password_repeat:'',
 })
 const rules =ref({
     username: [
-    { min: 6, max: 12, message: '长度必须在6-12之间', trigger: 'blur' },
+    { min: 5, max: 12, message: '长度必须在5-12之间', trigger: 'blur' },
   ],  
 }) 
 
@@ -46,10 +46,10 @@ const formRef = ref(null)
 
 // 登录方法，获取 session_id 并存储到 sessionStorage 中
 function handleRegister (){
-    axios.post('http://127.0.0.1:8888/api/register', form.value)
+    axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/user/register`, form.value)
         .then(response => {
         const { data, headers } = response;
-        if (data.code === 201) {
+        if (data.code === 200) {
             ElMessage.success(data.msg)
             router.replace('/login')   
         } else {
@@ -58,18 +58,6 @@ function handleRegister (){
         })
         .catch(error => console.error(`登录失败: ${error.message}`));
 }
-// //注册处理函数
-// const handleRegister=()=>{
-//     formRef.value.validate(async(valid)=>{
-//         if(valid){
-//             await Register(form.value)  
-//         }
-//         else{
-//             console.log('error sumbit!')
-//             return false
-//         }
-//     })
-// }
 
 //注册返回处理函数
 const handleReturn=()=>{
@@ -82,6 +70,7 @@ const handleReturn=()=>{
         }
     })
 }
+
 const passwordType = ref('password')
 const changeType = ()=>{
     if(passwordType.value === 'password'){

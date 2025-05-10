@@ -120,29 +120,29 @@
           <template #header>
             <div class="card-header">
               <span>即将到期活动</span>
-              <el-button type="text" @click="viewAllUpcoming">查看全部</el-button>
+              <!-- <el-button type="text" @click="viewAllUpcoming">查看全部</el-button> -->
             </div>
           </template>
-          <el-table :data="upcomingTasks" height="300" style="width: 100%">
-            <el-table-column prop="name" label="活动名称" width="180" />
-            <el-table-column prop="end_time" label="截止时间" width="180">
-              <template #default="{row}">
-                {{ formatTime(row.end_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{row}">
-                <el-tag :type="row.status === 0 ? 'warning' : 'success'" size="small">
-                  {{ row.status === 0 ? '未完成' : '已完成' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="{row}">
-                <el-button link type="primary" size="small" @click="viewTaskDetail(row)">详情</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            <el-table :data="upcomingTasks" height="300" style="width: 100%">
+              <el-table-column prop="title" label="活动名称" width="180" />
+              <el-table-column prop="end_time" label="截止时间" width="180">
+                <template #default="{row}">
+                  {{ formatTime(row.end_time * 1000) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="code" label="状态" width="100">
+                <template #default="{row}">
+                  <el-tag :type="row.code === 0 ? 'warning' : 'success'" size="small">
+                    {{ row.code === 0 ? '未完成' : '已完成' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="80">
+                <template #default="{row}">
+                  <el-button link type="primary" size="small" @click="viewTaskDetail(row)">详情</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
         </el-card>
       </el-col>
       <el-col :span="12">
@@ -150,29 +150,29 @@
           <template #header>
             <div class="card-header">
               <span>高优先级活动</span>
-              <el-button type="text" @click="viewAllHighPriority">查看全部</el-button>
+              <!-- <el-button type="text" @click="viewAllHighPriority">查看全部</el-button> -->
             </div>
           </template>
-          <el-table :data="highPriorityTasks" height="300" style="width: 100%">
-            <el-table-column prop="name" label="活动名称" width="180" />
-            <el-table-column prop="type" label="类型" width="120">
-              <template #default="{row}">
-                <el-tag :type="getTypeTagType(row.type)" size="small">
-                  {{ getTypeName(row.type) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="end_time" label="截止时间" width="180">
-              <template #default="{row}">
-                {{ formatTime(row.end_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="{row}">
-                <el-button link type="primary" size="small" @click="viewTaskDetail(row)">详情</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            <el-table :data="highPriorityTasks" height="300" style="width: 100%">
+              <el-table-column prop="title" label="活动名称" width="180" />
+              <el-table-column prop="type" label="类型" width="120">
+                <template #default="{row}">
+                  <el-tag :type="getTypeTagType(row.type)" size="small">
+                    {{ getTypeName(row.type) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="end_time" label="截止时间" width="180">
+                <template #default="{row}">
+                  {{ formatTime(row.end_time) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="80">
+                <template #default="{row}">
+                  <el-button link type="primary" size="small" @click="viewTaskDetail(row)">详情</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
         </el-card>
       </el-col>
     </el-row>

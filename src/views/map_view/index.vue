@@ -1,435 +1,433 @@
 <template>
-  <div class="dashboard-container">
-    <!-- 顶部数据概览 -->
-    <el-row :gutter="20" class="mb-20">
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #409EFF20;">
-              <el-icon color="#409EFF" :size="24"><Calendar /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">总任务数</div>
-              <div class="stat-value">{{ stats.totalTasks }}</div>
-              <div class="stat-compare">
-                <span :class="stats.taskChange >= 0 ? 'up' : 'down'">
-                  {{ Math.abs(stats.taskChange) }}%
-                  <el-icon :name="stats.taskChange >= 0 ? 'CaretTop' : 'CaretBottom'" />
-                </span>
-                较上月
-              </div>
+  <div class="map-container">
+    <div class="sidebar">
+      <el-card v-for="(points, type) in groupedPoints" :key="type" class="type-card">
+        <template #header>
+          <div class="card-header">
+            <span>{{ type }}</span>
+            <el-button size="small" type="primary" @click="addPoint(type)">新增</el-button>
+          </div>
+        </template>
+        <el-scrollbar class="point-list">
+          <div v-for="point in points" :key="point.id" class="point-item">
+            <span @click="focusPoint(point)">{{ point.name }}</span>
+            <div class="actions">
+              <el-button size="small" @click="editPoint(point)">编辑</el-button>
+              <el-button size="small" type="danger" @click="deletePoint(point)">删除</el-button>
             </div>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #67C23A20;">
-              <el-icon color="#67C23A" :size="24"><Checked /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">已完成</div>
-              <div class="stat-value">{{ stats.completedTasks }}</div>
-              <div class="stat-rate">
-                完成率 {{ stats.completionRate }}%
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #E6A23C20;">
-              <el-icon color="#E6A23C" :size="24"><Clock /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">进行中</div>
-              <div class="stat-value">{{ stats.inProgressTasks }}</div>
-              <div class="stat-compare">
-                <span :class="stats.progressChange >= 0 ? 'up' : 'down'">
-                  {{ Math.abs(stats.progressChange) }}%
-                  <el-icon :name="stats.progressChange >= 0 ? 'CaretTop' : 'CaretBottom'" />
-                </span>
-                较上周
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background-color: #F56C6C20;">
-              <el-icon color="#F56C6C" :size="24"><Warning /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">逾期任务</div>
-              <div class="stat-value">{{ stats.overdueTasks }}</div>
-              <div class="stat-compare">
-                <span :class="stats.overdueChange >= 0 ? 'up' : 'down'">
-                  {{ Math.abs(stats.overdueChange) }}%
-                  <el-icon :name="stats.overdueChange >= 0 ? 'CaretTop' : 'CaretBottom'" />
-                </span>
-                较上周
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </el-scrollbar>
+      </el-card>
+    </div>
+    <div class="map" ref="mapContainer"></div>
 
-    <!-- 中间图表区 -->
-    <el-row :gutter="20" class="mb-20">
-      <el-col :span="16">
-        <el-card shadow="hover" class="chart-card">
-          <template #header>
-            <div class="card-header">
-              <span>任务完成趋势</span>
-              <el-select v-model="trendTimeRange" size="small" style="width: 120px">
-                <el-option label="近7天" value="7d" />
-                <el-option label="近30天" value="30d" />
-                <el-option label="近90天" value="90d" />
-              </el-select>
-            </div>
-          </template>
-          <div class="chart-container">
-            <line-chart :chart-data="trendChartData" />
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="hover" class="chart-card">
-          <template #header>
-            <div class="card-header">
-              <span>任务类型分布</span>
-            </div>
-          </template>
-          <div class="chart-container">
-            <pie-chart :chart-data="typeDistributionData" />
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- 抽屉组件 -->
+    <el-drawer
+      v-model="drawerVisible"
+      title="新增/编辑点位"
+      size="25%"
+      :before-close="resetForm"
+      direction="rtl">
+      <el-form :model="form">
+        <el-form-item label="名称">
+          <el-input v-model="form.name" />
+        </el-form-item>
 
-    <!-- 底部表格区 -->
-    <el-row :gutter="20">
-      <el-col :span="12">
-        <el-card shadow="hover" class="table-card">
-          <template #header>
-            <div class="card-header">
-              <span>即将到期任务</span>
-              <el-button type="text" @click="viewAllUpcoming">查看全部</el-button>
-            </div>
-          </template>
-          <el-table :data="upcomingTasks" height="300" style="width: 100%">
-            <el-table-column prop="name" label="任务名称" width="180" />
-            <el-table-column prop="end_time" label="截止时间" width="180">
-              <template #default="{row}">
-                {{ formatTime(row.end_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{row}">
-                <el-tag :type="row.status === 0 ? 'warning' : 'success'" size="small">
-                  {{ row.status === 0 ? '未完成' : '已完成' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="{row}">
-                <el-button link type="primary" size="small" @click="viewTaskDetail(row)">详情</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-      <el-col :span="12">
-        <el-card shadow="hover" class="table-card">
-          <template #header>
-            <div class="card-header">
-              <span>高优先级任务</span>
-              <el-button type="text" @click="viewAllHighPriority">查看全部</el-button>
-            </div>
-          </template>
-          <el-table :data="highPriorityTasks" height="300" style="width: 100%">
-            <el-table-column prop="name" label="任务名称" width="180" />
-            <el-table-column prop="type" label="类型" width="120">
-              <template #default="{row}">
-                <el-tag :type="getTypeTagType(row.type)" size="small">
-                  {{ getTypeName(row.type) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="end_time" label="截止时间" width="180">
-              <template #default="{row}">
-                {{ formatTime(row.end_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="{row}">
-                <el-button link type="primary" size="small" @click="viewTaskDetail(row)">详情</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
+        <!-- 动态选择人员 -->
+        <el-form-item label="选择人员">
+          <el-select v-model="form.selectedPeople" multiple placeholder="请选择人员">
+            <el-option
+              v-for="person in availablePeople"
+              :key="person.id"
+              :label="person.relation ? `${person.name} (${person.relation})` : person.name"
+              :value="person.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="drawerVisible = false">取消</el-button>
+        <el-button type="primary" @click="savePoint">保存</el-button>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
+
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { Calendar, Checked, Clock, Warning, CaretTop, CaretBottom } from '@element-plus/icons-vue'
 import axios from 'axios'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { ElMessage } from 'element-plus'
-import dayjs from 'dayjs'
-import LineChart from '@/components/charts/LineChart.vue'
-import PieChart from '@/components/charts/PieChart.vue'
 
-// 数据状态
-const stats = reactive({
-  totalTasks: 0,
-  completedTasks: 0,
-  inProgressTasks: 0,
-  overdueTasks: 0,
-  completionRate: 0,
-  taskChange: 0,
-  progressChange: 0,
-  overdueChange: 0
+const mapContainer = ref(null)
+const map = ref(null)
+const dialogVisible = ref(false)
+const editingPoint = ref(null)
+const unsetRelatives = ref([])
+const drawerVisible = ref(false)
+const form = reactive({
+  name: '',
+  type: '',
+  latlng: null,
+  selectedPeople: [] // 存储所选人员的 id 列表
 })
 
-const trendTimeRange = ref('30d')
-const trendChartData = reactive({
-  dates: [],
-  completed: [],
-  created: []
+const pointTypes = ['亲属', '同事', '朋友', '同学']
+const pointColors = {
+  '亲属': 'red',
+  '同事': 'blue',
+  '朋友': 'green',
+  '同学': 'orange'
+}
+
+// 已设置点位的人员数据
+const points = reactive([])
+
+// 所有类型人员数据（包括未设置点位的）
+const people = reactive({
+  '亲属': [
+    { id: 1, name: '爸爸' },
+    { id: 2, name: '妈妈' },
+    { id: 3, name: '哥哥' },
+    { id: 4, name: '姐姐' },
+    { id: 5, name: '弟弟' }
+  ],
+  '同事': [
+    { id: 6, name: '张三' },
+    { id: 7, name: '李四' },
+    { id: 8, name: '王五' }
+  ],
+  '朋友': [
+    { id: 9, name: '刘备' },
+    { id: 10, name: '关羽' },
+    { id: 11, name: '张飞' }
+  ],
+  '同学': [
+    { id: 12, name: '小明' },
+    { id: 13, name: '小红' },
+    { id: 14, name: '小刚' }
+  ]
 })
 
-const typeDistributionData = reactive({
-  labels: [],
-  data: []
+const groupedPoints = computed(() => {
+  const groups = {}
+  pointTypes.forEach(type => { groups[type] = [] })
+
+  points.forEach(p => {
+    if (groups[p.type]) {
+      groups[p.type].push(p)
+    } else {
+      console.warn('未知的点类型:', p)
+    }
+  })
+
+  return groups
 })
 
-const upcomingTasks = ref([])
-const highPriorityTasks = ref([])
+function initMap() {
+  map.value = L.map(mapContainer.value).setView([34.3416, 108.9398], 5)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map.value)
 
-// 获取统计数据
-const fetchStats = async () => {
+  map.value.on('click', e => {
+    ElMessage.info('请在左侧选择要新增的类型')
+  })
+
+  updateMarkers()
+}
+
+async function addPoint(type) {
+  form.type = type
+  form.selectedPeople = [] // 清空所选人员
+
+  // 获取未设置点位的人员
+  await fetchUnsetPeople(type)
+
+  map.value.once('click', e => {
+    form.name = ''
+    form.latlng = e.latlng
+    editingPoint.value = null
+    drawerVisible.value = true
+  })
+  ElMessage.info(`点击地图选择 ${type} 点位位置`)
+}
+
+// --------------------------------------------------------新增/修改一个点位操作
+async function savePoint() {
+  if (!form.name.trim()) {
+    ElMessage.warning('请输入名称')
+    return
+  }
+
+  if (form.selectedPeople.length === 0) {
+    ElMessage.warning('请选择至少一个人员')
+    return
+  }
+
+  const newPoint = {
+    name: form.name,
+    type: form.type,
+    latlng: form.latlng,
+    selectedPeople: form.selectedPeople
+  }
+
   try {
     const token = sessionStorage.getItem('token')
-    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/tasks/stats`, {
-      headers: { Authorization: token }
-    })
-    
-    if (response.data.code === 200) {
-      Object.assign(stats, response.data.data)
+    if (!token) {
+      ElMessage.error('未登录，无法保存')
+      return
     }
-  } catch (error) {
-    ElMessage.error('获取统计数据失败: ' + error.message)
+
+    let res;
+    if (editingPoint.value) {
+      // 修改点位
+      res = await axios.put(`${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/point/${editingPoint.value.id}`, newPoint, {
+        headers: {
+          Authorization: token
+        }
+      })
+    } else {
+      // 新增点位
+      res = await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/point`, newPoint, {
+        headers: {
+          Authorization: token
+        }
+      })
+    }
+
+    if (res.data.code === 200) {
+      if (editingPoint.value) {
+        // 修改成功后更新本地数据
+        const index = points.findIndex(p => p.id === editingPoint.value.id)
+        if (index !== -1) {
+          points[index] = res.data.data // 更新本地数据
+        }
+      } else {
+        // 新增点位，添加到本地
+        points.push(res.data.data)
+      }
+      ElMessage.success('点位保存成功')
+      dialogVisible.value = false
+      resetForm()
+      fetchAllPoints()
+      // updateMarkers()
+    } else {
+      ElMessage.error('保存点位失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('接口请求失败')
   }
 }
 
-// 获取趋势数据
-const fetchTrendData = async () => {
+
+function editPoint(point) {
+  form.name = point.name
+  form.type = point.type
+  form.latlng = point.latlng
+  form.selectedPeople = point.selectedPeople
+  editingPoint.value = point
+  drawerVisible.value = true
+}
+
+
+// ----------------------------------------------------删除点位
+async function deletePoint(point) {
+  const index = points.indexOf(point)
+  if (index !== -1) {
+    points.splice(index, 1)
+  }
+  updateMarkers()
+
   try {
     const token = sessionStorage.getItem('token')
-    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/tasks/trend`, {
-      params: { range: trendTimeRange.value },
-      headers: { Authorization: token }
-    })
-    
-    if (response.data.code === 200) {
-      trendChartData.dates = response.data.data.dates
-      trendChartData.completed = response.data.data.completed
-      trendChartData.created = response.data.data.created
+    if (!token) {
+      ElMessage.error('未登录，无法删除')
+      return
     }
-  } catch (error) {
-    ElMessage.error('获取趋势数据失败: ' + error.message)
+
+    const res = await axios.delete(`${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/point/${point.id}`, {
+      headers: {
+        Authorization: token
+      }
+    })
+
+    if (res.data.code === 200) {
+      ElMessage.success('点位删除成功')
+      updateMarkers()
+    } else {
+      ElMessage.error('删除点位失败')
+    }
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('接口请求失败')
   }
 }
 
-// 获取类型分布数据
-const fetchTypeDistribution = async () => {
+function focusPoint(point) {
+  map.value.setView(point.latlng, 12)
+}
+
+function resetForm() {
+  form.name = ''
+  form.type = ''
+  form.latlng = null
+  form.selectedPeople = []
+  drawerVisible.value = false
+}
+
+// --------------------------------------------获取所有未设置点位的人员，根据选中类型确定
+async function fetchUnsetPeople(type) {
   try {
     const token = sessionStorage.getItem('token')
-    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/tasks/type-distribution`, {
-      headers: { Authorization: token }
+    if (!token) {
+      ElMessage.error('未登录，无法保存')
+      return
+    }
+
+    let url = ''
+    switch (type) {
+      case '同事':
+        url = `${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/unset_map_colleague`
+        break
+      case '朋友':
+        url = `${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/unset_map_friend`
+        break
+      case '同学':
+        url = `${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/unset_map_classmate`
+        break
+      default:
+        url = `${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/unset_map_relative`
+    }
+
+    const res = await axios.get(url, {
+      headers: {
+        Authorization: token
+      }
     })
     
-    if (response.data.code === 200) {
-      typeDistributionData.labels = response.data.data.labels
-      typeDistributionData.data = response.data.data.values
+    if (res.data.code === 200) {
+      // 根据返回的数据更新人员列表
+      unsetRelatives.value = res.data.data
+      console.log('保存到 unsetRelatives:', unsetRelatives.value)
+    } else {
+      ElMessage.error(`获取未设置地图的${type}失败`)
     }
-  } catch (error) {
-    ElMessage.error('获取类型分布数据失败: ' + error.message)
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('接口请求失败')
   }
 }
 
-// 获取即将到期任务
-const fetchUpcomingTasks = async () => {
+// 动态获取选择人员的列表
+const availablePeople = computed(() => {
+  return unsetRelatives.value
+})
+
+const markers = reactive([])
+
+function updateMarkers() {
+  markers.forEach(m => m.remove())
+  markers.length = 0
+
+  points.forEach(p => {
+    if (!p.latlng || !p.latlng.lat || !p.latlng.lng) {
+      console.error(`无效的 latlng，点位名称：${p.name}`)
+      return
+    }
+
+    const marker = L.circleMarker(p.latlng, {
+      radius: 8,
+      color: pointColors[p.type],
+      fillColor: pointColors[p.type],
+      fillOpacity: 0.8
+    }).addTo(map.value).bindPopup(`${p.type}: ${p.name}`)
+    markers.push(marker)
+  })
+}
+
+
+// --------------------------------------------加载所有的点位
+async function fetchAllPoints() {
   try {
     const token = sessionStorage.getItem('token')
-    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/tasks/upcoming`, {
-      headers: { Authorization: token }
-    })
-    
-    if (response.data.code === 200) {
-      upcomingTasks.value = response.data.data
+    if (!token) {
+      ElMessage.error('未登录，无法获取点位')
+      return
     }
-  } catch (error) {
-    ElMessage.error('获取即将到期任务失败: ' + error.message)
-  }
-}
 
-// 获取高优先级任务
-const fetchHighPriorityTasks = async () => {
-  try {
-    const token = sessionStorage.getItem('token')
-    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/tasks/high-priority`, {
-      headers: { Authorization: token }
+    const res = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/relative/point`, {
+      headers: {
+        Authorization: token
+      }
     })
-    
-    if (response.data.code === 200) {
-      highPriorityTasks.value = response.data.data
+
+    if (res.data.code === 200) {
+      points.length = 0 // 清空已有的
+      res.data.data.forEach(p => {
+        points.push({
+          id: p.id,
+          name: p.name,
+          type: p.type,
+          latlng: {
+            lat: p.lat, // 后端返回的字段需要是 lat/lng
+            lng: p.lng
+          },
+          selectedPeople: p.selectedPeople // 假设后端返回的是 id 数组或字符串
+        })
+      })
+      updateMarkers()
+      ElMessage.success('加载点位成功')
+      console.log('后端返回:', res.data.data)
+    } else {
+      ElMessage.error('获取点位失败')
     }
-  } catch (error) {
-    ElMessage.error('获取高优先级任务失败: ' + error.message)
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('接口请求失败')
   }
 }
 
-// 时间格式化
-const formatTime = (timestamp) => {
-  return dayjs(timestamp).format('YYYY-MM-DD HH:mm')
-}
 
-// 查看任务详情
-const viewTaskDetail = (task) => {
-  // 跳转到任务详情页或打开抽屉
-  console.log('查看任务详情:', task)
-}
-
-// 查看全部即将到期任务
-const viewAllUpcoming = () => {
-  // 跳转到任务列表页并筛选即将到期任务
-  console.log('查看全部即将到期任务')
-}
-
-// 查看全部高优先级任务
-const viewAllHighPriority = () => {
-  // 跳转到任务列表页并筛选高优先级任务
-  console.log('查看全部高优先级任务')
-}
-
-// 从之前的代码中复用这些方法
-const getTypeName = (type) => {
-  const typeMap = {
-    0: '日程',
-    1: '生日',
-    2: '纪念日',
-    3: '倒数日'
-  }
-  return typeMap[type] || '未知类型'
-}
-
-const getTypeTagType = (type) => {
-  const typeTagMap = {
-    0: '',        // 默认样式
-    1: 'success', // 绿色
-    2: 'info',    // 蓝色
-    3: 'danger'   // 红色
-  }
-  return typeTagMap[type] || ''
-}
-
-// 初始化加载数据
 onMounted(() => {
-  // fetchStats()
-  // fetchTrendData()
-  // fetchTypeDistribution()
-  // fetchUpcomingTasks()
-  // fetchHighPriorityTasks()
+  initMap()
+  fetchAllPoints()
 })
 </script>
 
 <style scoped>
-.dashboard-container {
-  padding: 20px;
-  background-color: #f5f7fa;
-}
-
-.mb-20 {
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  border-radius: 8px;
-  border: none;
-}
-
-.stat-content {
+.map-container {
   display: flex;
-  align-items: center;
+  height: 100vh;
 }
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
+.sidebar {
+  width: 300px;
+  overflow-y: auto;
+  background: #f9f9f9;
+  padding: 10px;
 }
-
-.stat-info {
-  flex: 1;
+.type-card {
+  margin-bottom: 10px;
 }
-
-.stat-title {
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 4px;
-}
-
-.stat-rate, .stat-compare {
-  font-size: 12px;
-  color: #909399;
-}
-
-.stat-rate {
-  color: #67C23A;
-}
-
-.up {
-  color: #F56C6C;
-}
-
-.down {
-  color: #67C23A;
-}
-
-.chart-card, .table-card {
-  border-radius: 8px;
-  border: none;
-  height: 100%;
-}
-
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
-.chart-container {
-  height: 300px;
+.point-list {
+  max-height: 200px;
+}
+.point-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+.map {
+  flex: 1;
+}
+.actions > .el-button {
+  margin-left: 4px;
 }
 </style>

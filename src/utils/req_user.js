@@ -22,7 +22,5 @@ request.interceptors.response.use((response)=>{
 })
 
 
-
-
 //导出
 export default request;

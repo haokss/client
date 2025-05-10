@@ -30,6 +30,7 @@ import { ref, computed } from "vue";
 import router from "@/router";
 import axios from "axios";
 import { ElMessage } from 'element-plus'
+import { getUserRole } from '@/utils/auth'
 
 const form =ref({
     user_name:'',
@@ -52,11 +53,18 @@ function handleLogin (){
     .then(response => {
       const { data, headers } = response;
       if (data.code === 200) {
-        //设置token
+        // 设置token
         sessionStorage.setItem('token', data.data.token);
+        // 取出用户名
+        const username = data.data.user.user_name; 
         ElMessage.success(data.msg)
         console.log('登录成功，准备跳转');
-        router.replace('/');
+        const role = getUserRole();
+        if (role === 'admin') {
+          router.replace('/admin/home_page');
+        } else {
+          router.replace('/');
+        }
         console.log('跳转完成'); 
       } else {
         ElMessage.error(data.msg)
@@ -65,7 +73,7 @@ function handleLogin (){
     .catch(error => console.error(`登录失败: ${error.message}`));
 }
 
-//注册转跳处理函数
+// 注册转跳处理函数
 const handleRegister = ()=>{
     router.replace('register')
 }

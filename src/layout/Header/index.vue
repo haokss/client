@@ -26,8 +26,8 @@
         <el-dropdown size="large">
           <div class="block"><el-avatar :size="45" :src="circleUrl" /></div>
           <template  #dropdown>                  
-              <el-dropdown-item  @click="handleUser">个人中心</el-dropdown-item>
-              <el-dropdown-item>拓展</el-dropdown-item>
+              <!-- <el-dropdown-item  @click="handleUser">个人中心</el-dropdown-item> -->
+              <!-- <el-dropdown-item>拓展</el-dropdown-item> -->
               <el-dropdown-item type="primary" @click="handleDes">退出</el-dropdown-item>
           </template>
         </el-dropdown>

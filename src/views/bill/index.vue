@@ -2,7 +2,7 @@
   <div>
     <!-- 上传区域 -->
     <el-row class="mb-4" type="flex" justify="start">
-      <el-col :span="6">
+      <el-col :span="3">
         <el-upload
           :before-upload="beforeUploadWeChat"
           :http-request="customRequest"
@@ -11,7 +11,7 @@
           <el-button type="success">上传微信账单</el-button>
         </el-upload>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="3">
         <el-upload
           :before-upload="beforeUploadAliPay"
           :http-request="customRequest"
