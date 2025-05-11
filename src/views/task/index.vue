@@ -23,12 +23,13 @@
           <el-option label="未完成" :value="0" />
           <el-option label="已完成" :value="1" />
         </el-select>
+        <el-button type="primary" @click="drawerVisible = true">新建活动</el-button>
       </div>
-      <el-button type="primary" @click="drawerVisible = true">新建活动</el-button>
     </div>
 
     <!-- 固定高度卡片区域 + 分页 -->
     <div class="task-container">
+      <template v-if="pagedTasks.length > 0">
       <el-row :gutter="20">
         <el-col v-for="task in pagedTasks" :key="task.id" :span="8" class="task-card">
           <el-card shadow="hover">
@@ -50,6 +51,12 @@
           </el-card>
         </el-col>
       </el-row>
+      </template>
+      <template v-else>
+        <div class="empty-state">
+          <el-empty description="暂无活动" />
+        </div>
+      </template>
     </div>
 
     <!-- 分页器 -->
@@ -70,7 +77,7 @@
         <el-form-item label="活动名称">
           <el-input v-model="form.name" placeholder="请输入活动名称" />
         </el-form-item>
-        <el-form-item label="计划时间">
+        <el-form-item label="开始时间">
           <el-date-picker
             v-model="form.date"
             type="date"
@@ -167,7 +174,7 @@ const fetchTasks = async () => {
     })
 
     if (response.data.code === 200) {
-      tableData.value = response.data.data.item.map(item => ({
+      tableData.value = (response.data.data.item ?? []).map(item => ({
         id: item.id,
         name: item.title,
         content: item.content,
@@ -387,5 +394,13 @@ const isOverdue = (task) => {
   z-index: 999;
   padding: 10px 0;
   box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 80px 0;
 }
 </style>

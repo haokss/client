@@ -82,30 +82,30 @@
       </el-table-column>
 
       <!-- 操作列（审核通过/拒绝 + 删除） -->
-      <el-table-column fixed="right" label="操作" width="350">
-        <template #default="scope">
-          <el-button
-            size="small"
-            @click="approveTask(scope.row, true)"
-            :disabled="scope.row.is_checked !== 0"
-          >
-            审核通过
-          </el-button>
-          <el-button
-            size="small"
-            @click="approveTask(scope.row, false)"
-            :disabled="scope.row.is_checked !== 0"
-          >
-            审核不通过
-          </el-button>
-          <el-button
-            size="small"
-            @click="deleteTask(scope.row)"
-          >
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
+        <el-table-column label="操作" width="260">
+          <template #default="scope">
+            <el-button
+              size="small"
+              @click="batchAuditSingle(scope.row, 1)"
+              :disabled="scope.row.is_checked !== 0"
+            >
+              审核通过
+            </el-button>
+            <el-button
+              size="small"
+              @click="batchAuditSingle(scope.row, 2)"
+              :disabled="scope.row.is_checked !== 0"
+            >
+              审核不通过
+            </el-button>
+            <el-button
+              size="small"
+              @click="deleteTask(scope.row)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
     </el-table>
 
     <!-- 分页 -->

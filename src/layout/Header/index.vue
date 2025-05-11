@@ -8,7 +8,12 @@
     </el-breadcrumb>
     <div class="right-section">
       <el-badge :value="unreadCount" :max="99" class="item" :hidden="unreadCount === 0">
-        <el-icon :size="24" color="#409EFF" @click="dialogVisible = true" style="cursor: pointer;"><Bell /></el-icon>
+        <el-icon 
+          :size="24" 
+          color="#409EFF" 
+          @click="handleBellClick" 
+          style="cursor: pointer;"
+        ><Bell /></el-icon>
       </el-badge>
     <el-menu
       :default-active="activeIndex"
@@ -26,8 +31,7 @@
         <el-dropdown size="large">
           <div class="block"><el-avatar :size="45" :src="circleUrl" /></div>
           <template  #dropdown>                  
-              <!-- <el-dropdown-item  @click="handleUser">个人中心</el-dropdown-item> -->
-              <!-- <el-dropdown-item>拓展</el-dropdown-item> -->
+              <el-dropdown-item  @click="handleUser">个人中心</el-dropdown-item>
               <el-dropdown-item type="primary" @click="handleDes">退出</el-dropdown-item>
           </template>
         </el-dropdown>
@@ -50,13 +54,10 @@
               @click="selectMessage(index)"
               :class="{ 'unread-message': !message.read }"
             >
-              <span>{{ message.title }}</span>
-              <el-tag 
-                :type="message.read ? 'info' : 'success'"
-                class="message-time"
-              >
-                {{ message.time }}
-              </el-tag>
+              <div class="message-entry">
+                <span class="message-time-tag">{{ message.time }}</span>
+                <span class="message-title">{{ message.title }}</span>
+              </div>
             </el-menu-item>
           </el-menu>
         </el-scrollbar>
@@ -165,6 +166,54 @@ onMounted(() => {
 watch(route, updateBreadcrumb)
 
 
+const handleBellClick = () => {
+  dialogVisible.value = true;
+  fetchNotifications()
+};
+
+// -------------------------------获取当前通知
+const fetchNotifications = async () => {
+  const token = sessionStorage.getItem('token');
+  try {
+    const response = await axios.get(`${process.env.VUE_APP_API_BASE_URL}/api/v1/notifications`, {
+      headers: {
+        Authorization: token
+      }
+    });
+    if (response.data.code === 200 && Array.isArray(response.data.data)) {
+      // 格式化后端返回的数据合并进消息列表
+      const fetchedMessages = response.data.data.map(n => {
+        let parsedData = {};
+        try {
+          parsedData = JSON.parse(n.data);
+        } catch (e) {
+          parsedData = { title: '无标题', content: '无内容' };
+        }
+
+        return {
+          id: n.id,
+          title: parsedData.title || '无标题',
+          content: parsedData.content || '无内容',
+          time: n.created_at 
+            ? new Date(n.created_at * 1000).toLocaleString()  // 时间戳为秒，需乘1000
+            : new Date().toLocaleString(),
+          read: n.is_read
+        };
+      });
+
+      // 避免重复加载（如刷新后新增的消息可能已存在于 SSE 中）
+      const existingIds = new Set(messages.value.map(m => m.id));
+      const newMessages = fetchedMessages.filter(m => !existingIds.has(m.id));
+
+      messages.value = [...newMessages, ...messages.value];
+    } else {
+      ElMessage.error("获取通知失败");
+    }
+  } catch (error) {
+    ElMessage.error("加载通知失败: " + error.message);
+  }
+};
+
 // -------------------------------SSE机制获取消息通知和消息弹窗处理
 const token = sessionStorage.getItem('token'); 
 const dialogVisible = ref(false);
@@ -174,19 +223,19 @@ const selectedMessage = ref(null);
 // 添加消息到列表并触发通知
 const addMessage = (messageData) => {
   const newMessage = {
-    id: Date.now(), // 使用时间戳作为唯一ID
+    id: messageData.id || Date.now(), // 优先使用真实 ID
     title: messageData.title || '新通知',
     content: messageData.content || '您有新的消息',
     time: messageData.time || new Date().toLocaleString(),
-    read: false // 添加未读状态
+    read: false
   };
-  
-  messages.value.unshift(newMessage); // 新消息置顶
-  
-  // 自动选中最新消息
+
+  // 去重：如果已有相同 id，则不添加
+  if (messages.value.some(msg => msg.id === newMessage.id)) return;
+
+  messages.value.unshift(newMessage);
   selectedMessage.value = newMessage;
-  
-  // 显示浏览器通知
+
   if (!document.hidden) {
     ElNotification({
       title: newMessage.title,
@@ -197,12 +246,12 @@ const addMessage = (messageData) => {
   }
 };
 
-// SSE消息处理统一修改
+// ---------------------------------------------------------SSE消息处理统一修改
 const handleSSEMessage = (e, eventType = 'message') => {
-  console.log(`Received ${eventType} event:`, e);
   try {
     const data = JSON.parse(e.data);
     addMessage({
+      id: data.id, // 由后端推送的真实 ID
       title: data.title,
       content: data.content,
       time: data.timestamp ? new Date(data.timestamp).toLocaleString() : null
@@ -255,30 +304,52 @@ onMounted(() => {
 });
 
 
-// 计算未读数量
+// -------------------------------------------计算未读数量
 const unreadCount = computed(() => {
   return messages.value.filter(msg => !msg.read).length;
 });
 
-// 标记所有已读
-const markAllRead = () => {
-  messages.value = messages.value.map(msg => ({
-    ...msg,
-    read: true
-  }));
-  ElMessage.success("已标记所有消息为已读");
-};
+// -------------------------------------------标记所有已读
+const markAllRead = async () => {
+  try {
+    await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/notifications/read_all`, {}, {
+      headers: {
+        Authorization: sessionStorage.getItem('token')
+      }
+    });
 
-// 选中消息处理
-const selectMessage = (index) => {
-  const selected = messages.value[index];
-  selectedMessage.value = selected;
-  
-  // 标记为已读
-  if (!selected.read) {
-    messages.value[index].read = true;
+    messages.value = messages.value.map(msg => ({
+      ...msg,
+      read: true
+    }));
+    ElMessage.success("已标记所有消息为已读");
+  } catch (err) {
+    ElMessage.error("一键已读失败: " + err.message);
   }
 };
+
+
+// -----------------------------------------选中消息处理
+const selectMessage = async (index) => {
+  const selected = messages.value[index];
+  selectedMessage.value = selected;
+
+  if (!selected.read) {
+    messages.value[index].read = true;
+
+    // 发请求标记已读
+    try {
+      await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/notification/read/${selected.id}`, {}, {
+        headers: {
+          Authorization: sessionStorage.getItem('token')
+        }
+      });
+    } catch (err) {
+      ElMessage.error("标记已读失败: " + err.message);
+    }
+  }
+};
+
 
 </script>
 
@@ -351,4 +422,28 @@ const selectMessage = (index) => {
   height: 100%;
   color: #909399;
 }
+
+.message-entry {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+}
+
+.message-time-tag {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.message-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.unread-message .message-title {
+  font-weight: bold;
+  color: #409EFF; /* 蓝色高亮未读 */
+}
+
 </style>

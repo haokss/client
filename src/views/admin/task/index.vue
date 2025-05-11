@@ -59,12 +59,14 @@
             <el-button
               size="small"
               @click="batchAuditSingle(scope.row, 1)"
+              :disabled="scope.row.is_checked !== 0"
             >
               审核通过
             </el-button>
             <el-button
               size="small"
               @click="batchAuditSingle(scope.row, 2)"
+              :disabled="scope.row.is_checked !== 0"
             >
               审核不通过
             </el-button>
