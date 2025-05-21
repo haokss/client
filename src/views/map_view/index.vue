@@ -1,26 +1,27 @@
 <template>
   <div class="map-container">
-    <div class="sidebar">
-      <el-card v-for="(points, type) in groupedPoints" :key="type" class="type-card">
-        <template #header>
-          <div class="card-header">
-            <span>{{ type }}</span>
-            <el-button size="small" type="primary" @click="addPoint(type)">新增</el-button>
-          </div>
-        </template>
-        <el-scrollbar class="point-list">
-          <div v-for="point in points" :key="point.id" class="point-item">
-            <span @click="focusPoint(point)">{{ point.name }}</span>
-            <div class="actions">
-              <el-button size="small" @click="editPoint(point)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deletePoint(point)">删除</el-button>
+    <!-- <el-card style="height: 100%; display: flex; flex-direction: column;"> -->
+      <div class="sidebar">
+        <el-card v-for="(points, type) in groupedPoints" :key="type" class="type-card">
+          <template #header>
+            <div class="card-header">
+              <span>{{ type }}</span>
+              <el-button size="small" type="primary" @click="addPoint(type)">新增</el-button>
             </div>
-          </div>
-        </el-scrollbar>
-      </el-card>
-    </div>
-    <div class="map" ref="mapContainer"></div>
-
+          </template>
+          <el-scrollbar class="point-list">
+            <div v-for="point in points" :key="point.id" class="point-item">
+              <span @click="focusPoint(point)">{{ point.name }}</span>
+              <div class="actions">
+                <el-button size="small" @click="editPoint(point)">编辑</el-button>
+                <el-button size="small" type="danger" @click="deletePoint(point)">删除</el-button>
+              </div>
+            </div>
+          </el-scrollbar>
+        </el-card>
+      </div>
+      <div class="map" ref="mapContainer"></div>
+    <!-- </el-card> -->
     <!-- 抽屉组件 -->
     <el-drawer
       v-model="drawerVisible"

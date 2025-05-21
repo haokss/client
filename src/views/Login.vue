@@ -90,12 +90,17 @@ const changeType = ()=>{
 <style scoped>
 .login {
   background-image: url(../assets/Login_bg.jpg);
-  background-size: cover;
-  background-position: center;
+  background-size: cover;               /* 让背景图覆盖整个容器 */
+  background-position: center;          /* 居中显示图片 */
+  background-repeat: no-repeat;         /* 不重复 */
+  background-attachment: fixed;         /* 背景固定，页面滚动时不动 */
+  
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 .login-form {

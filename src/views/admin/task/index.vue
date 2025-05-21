@@ -1,96 +1,92 @@
 <template>
-  <div>
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索活动名称或内容"
-          clearable
-          @input="handleSearch"
-          style="width: 200px"
-        />
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          style="width: 240px"
-          unlink-panels
-          value-format="YYYY-MM-DD"
-        />
-        <el-select v-model="statusFilter" placeholder="审核状态" style="width: 150px" clearable>
-          <el-option label="未审核" :value="0" />
-          <el-option label="审核通过" :value="1" />
-          <el-option label="审核未通过" :value="2" />
-        </el-select>
-        <el-button type="success" @click="batchAudit(1)" :disabled="multipleSelection.length === 0">
-          批量审核通过
-        </el-button>
-        <el-button type="danger" @click="batchAudit(2)" :disabled="multipleSelection.length === 0">
-          批量审核不通过
-        </el-button>
-      </div>
-    </div>
+  <div class="p-6">
+    <div class="card-wrapper"> 
+      <!-- 内容部分 -->
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
+        <!-- 工具栏 -->
+        <div class="toolbar" style="margin-bottom: 10px;">
+          <!-- 搜索区域 -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索活动名称或内容"
+              clearable
+              @input="handleSearch"
+              style="width: 200px"
+            />
+            <el-date-picker
+              v-model="dateRange"
+              type="daterange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width: 240px"
+              unlink-panels
+              value-format="YYYY-MM-DD"
+            />
+            <el-select v-model="statusFilter" placeholder="审核状态" style="width: 150px" clearable>
+              <el-option label="未审核" :value="0" />
+              <el-option label="审核通过" :value="1" />
+              <el-option label="审核未通过" :value="2" />
+            </el-select>
+            <el-button type="success" @click="batchAudit(1)" :disabled="multipleSelection.length === 0">
+              批量审核通过
+            </el-button>
+            <el-button type="danger" @click="batchAudit(2)" :disabled="multipleSelection.length === 0">
+              批量审核不通过
+            </el-button>
+          </div>
+        </div>
 
-    <!-- 活动表格 -->
-    <el-table
-      :data="pagedTasks"
-      style="width: 100%"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="username" label="用户名" width="150" />
-      <el-table-column prop="name" label="活动名称" width="180" />
-      <el-table-column prop="startDate" label="开始时间" width="150" />
-      <el-table-column prop="endDate" label="结束时间" width="150" />
-      <el-table-column prop="content" label="活动内容" />
-      <el-table-column label="审核状态" width="120">
-        <template #default="scope">
-          <el-tag
-            :type="scope.row.is_checked === 0 ? 'info' : (scope.row.is_checked === 1 ? 'success' : 'danger')"
+        <!-- 表格区域 -->
+        <div style="flex: 1; overflow: auto;">
+          <el-table
+            :data="pagedTasks"
+            style="min-width: 100%"
+            stripe
+            @selection-change="handleSelectionChange"
           >
-            {{ scope.row.is_checked === 0 ? '未审核' : (scope.row.is_checked === 1 ? '审核通过' : '审核未通过') }}
-          </el-tag>
-        </template>
-      </el-table-column>
-        <el-table-column label="操作" width="260">
-          <template #default="scope">
-            <el-button
-              size="small"
-              @click="batchAuditSingle(scope.row, 1)"
-              :disabled="scope.row.is_checked !== 0"
-            >
-              审核通过
-            </el-button>
-            <el-button
-              size="small"
-              @click="batchAuditSingle(scope.row, 2)"
-              :disabled="scope.row.is_checked !== 0"
-            >
-              审核不通过
-            </el-button>
-            <el-button
-              size="small"
-              @click="deleteTask(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-    </el-table>
+            <el-table-column type="selection" width="50" />
+            <el-table-column prop="username" label="用户名" width="150" />
+            <el-table-column prop="name" label="活动名称" width="180" />
+            <el-table-column prop="startDate" label="开始时间" width="150" />
+            <el-table-column prop="endDate" label="结束时间" width="150" />
+            <el-table-column prop="content" label="活动内容" />
+            <el-table-column label="审核状态" width="120">
+              <template #default="scope">
+                <el-tag :type="scope.row.is_checked === 0 ? 'info' : (scope.row.is_checked === 1 ? 'success' : 'danger')">
+                  {{ scope.row.is_checked === 0 ? '未审核' : (scope.row.is_checked === 1 ? '审核通过' : '审核未通过') }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="260">
+              <template #default="scope">
+                <el-button size="small" @click="batchAuditSingle(scope.row, 1)" :disabled="scope.row.is_checked !== 0">
+                  审核通过
+                </el-button>
+                <el-button size="small" @click="batchAuditSingle(scope.row, 2)" :disabled="scope.row.is_checked !== 0">
+                  审核不通过
+                </el-button>
+                <el-button size="small" @click="deleteTask(scope.row)">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-card>
 
-    <!-- 分页器 -->
-    <el-pagination
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      :page-sizes="[5, 10, 20]"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="filteredTasks.length"
-      :background="true"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+      <!-- 分页器固定在底部 -->
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[5, 10, 20]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="filteredTasks.length"
+        :background="true"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
   </div>
 </template>
 
@@ -240,7 +236,12 @@ onMounted(fetchTasks)
 </script>
 
 <style scoped>
-.toolbar {
+/* .toolbar {
   margin-bottom: 20px;
+} */
+
+.card-wrapper {
+  height: calc(100vh - 130px); /* 调整这个值来预留 header、padding、分页高度 */
 }
+
 </style>

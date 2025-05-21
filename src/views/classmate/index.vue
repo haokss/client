@@ -1,6 +1,7 @@
 <template>
   <div class="p-6">
-    <el-card>
+    <div class="card-wrapper">
+    <el-card style="height: 100%; display: flex; flex-direction: column;">
       <!-- 搜索 & 操作 -->
       <div class="flex justify-between mb-4">
         <div class="flex gap-2 items-center">
@@ -12,8 +13,9 @@
             <el-option label="大学" value="大学" />
           </el-select>
           <el-button type="primary" @click="fetchData">搜索</el-button>
+          <el-button @click="resetSearch">重置</el-button>
           <el-button type="success" @click="openDialog()">添加同学</el-button>
-          <el-button type="danger" :disabled="!multipleSelection.length" @click="batchRemove">批量删除</el-button>
+          <el-button plain type="danger" :disabled="!multipleSelection.length" @click="batchRemove">批量删除</el-button>
         </div>
       </div>
 
@@ -28,21 +30,23 @@
         <el-table-column label="操作" width="180">
           <template #default="scope">
             <el-button size="small" @click="openDialog(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="remove(scope.row.ID)">删除</el-button>
+            <el-button size="small" type="danger" @click="remove(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-
+    </el-card>
       <!-- 分页 -->
       <el-pagination
         class="mt-4"
-        layout="prev, pager, next"
+        layout="total, sizes, prev, pager, next, jumper"
+        :page-sizes="[10, 20, 30, 50]"
         :total="total"
         :current-page="page"
         :page-size="pageSize"
+        @size-change="handleSizeChange"
         @current-change="handlePageChange"
       />
-    </el-card>
+    </div>
 
     <el-drawer
       v-model="drawerVisible"
@@ -93,7 +97,7 @@ import axios from 'axios'
 const tableData = ref([])
 const total = ref(0)
 const page = ref(1)
-const pageSize = 5
+const pageSize = ref(10)
 const search = ref({ name: '', stage: '' })
 
 // 表单
@@ -106,6 +110,13 @@ const rules = {
   school: [{ required: true, message: '请输入学校', trigger: 'blur' }],
   className: [{ required: true, message: '请输入班级', trigger: 'blur' }],
   phone: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
+}
+
+// -------------------------------重置
+const resetSearch = () => {
+  search.value.name = ''
+  search.value.stage = ''
+  fetchData()
 }
 
 // 获取数据（从后端）
@@ -121,7 +132,7 @@ const fetchData = async () => {
         name: search.value.name,
         stage: search.value.stage,
         page: page.value,
-        pageSize,
+        pageSize: pageSize.value,
       },
       headers: {
         Authorization: token,
@@ -158,7 +169,7 @@ const submit = () => {
         return
       }
       if (form.value.id) {
-        await axios.put(`${process.env.VUE_APP_API_BASE_URL}/api/v1/classmates/${form.value.id}`, form.value, {
+        await axios.put(`${process.env.VUE_APP_API_BASE_URL}/api/v1/classmate/${form.value.id}`, form.value, {
           headers: {Authorization: token }})
       } else {
         await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/v1/classmate`, form.value, {
@@ -187,7 +198,7 @@ const batchRemove = () => {
   }).then(async () => {
     try {
       const token = sessionStorage.getItem('token')
-      const ids = multipleSelection.value.map(item => item.ID)
+      const ids = multipleSelection.value.map(item => item.id)
       await axios.delete(`${process.env.VUE_APP_API_BASE_URL}/api/v1/classmate/batch_delete`, {
         data: { ids },
         headers: { Authorization: token },
@@ -201,17 +212,38 @@ const batchRemove = () => {
 }
 
 const remove = async (id) => {
-  ElMessageBox.confirm('确定删除该同学吗？', '警告', { type: 'warning' }).then(async () => {
-    try {
-      await axios.delete(`/api/v1/classmates/${id}`)
-      ElMessage.success('删除成功')
-      fetchData()
-    } catch (error) {
-      ElMessage.error('删除失败')
-    }
-  })
+  ElMessageBox.confirm('确定删除该同学吗？', '警告', { type: 'warning' })
+    .then(async () => {
+      try {
+        const token = sessionStorage.getItem('token')
+        await axios.delete(`${process.env.VUE_APP_API_BASE_URL}/api/v1/classmate/batch_delete`, {
+          headers: { Authorization: token },
+          data: { ids: [id] },
+        })
+        ElMessage.success('删除成功')
+        fetchData()
+      } catch (error) {
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {
+      // 用户取消删除或点击空白处关闭弹窗，不做任何处理即可避免报错
+    })
+}
+
+// -------------------------------------------------分页大小变化
+const handleSizeChange = (size) => {
+  page.value = 1
+  pageSize.value = size
+  fetchData()
 }
 
 // 初始加载
 fetchData()
 </script>
+
+<style scoped>
+.card-wrapper {
+  height: calc(100vh - 120px); /* 调整这个值来预留 header、padding、分页高度 */
+}
+</style>

@@ -1,90 +1,117 @@
 <template>
-  <el-button @click="createTask">新建任务</el-button>
-  <el-button @click="deleteSelectedTasks" :disabled="selectedTasks.length === 0">
-    删除活动
-  </el-button>
-    <el-table
-      ref="tableRef"
-      row-key="date"
-      :data="tableData"
-      style="width: 100%"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" />
-      <el-table-column
-        prop="start_time"
-        label="开始时间"
-        sortable
-        width="180"
-        :formatter="(row) => formatTime(row.start_time)"
-      />
-      <el-table-column
-        prop="end_time"
-        label="结束时间"
-        sortable
-        width="180"
-        :formatter="(row) => formatTime(row.end_time)"
-      />
-      <el-table-column prop="name" label="任务名称" sortable width="180" />
-      <el-table-column
-        prop="tag"
-        label="类型"
-        width="120"
-        :filters="typeFilters"
-        :filter-method="filterType"
-      >
-        <template #default="scope">
-          <el-tag
-            :type="getTypeTagType(scope.row.type)"
-            disable-transitions
-            >{{ getTypeName(scope.row.type) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="content" label="内容" sortable :formatter="formatter" />
-
-      <el-table-column
-        prop="tag"
-        label="状态"
-        width="100"
-        :filters="statusFilters"
-        :filter-method="filterStatus"
-      >
-        <template #default="scope">
-          <el-tag
-            :type="scope.row.status === 0 ? 'warning' : 'success'"
-            disable-transitions
-            >{{ scope.row.status === 0 ? '未完成' : '已完成'}}</el-tag
+  <div class="card-wrapper">
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索提醒名称或内容"
+          clearable
+          @input="handleSearch"
+          style="width: 200px"
+        />
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          style="width: 240px"
+          unlink-panels
+          value-format="YYYY-MM-DD"
+        />
+        <el-select v-model="statusFilter" placeholder="提醒状态" style="width: 120px" clearable>
+          <el-option label="未完成" :value="0" />
+          <el-option label="已完成" :value="1" />
+        </el-select>
+          <el-button type="primary" @click="createTask">新建提醒</el-button>
+          <el-button plain type="danger" @click="deleteSelectedTasks" :disabled="selectedTasks.length === 0">
+            删除提醒
+          </el-button>
+        </div>
+        <!-- 表格 -->
+          <el-table
+            ref="tableRef"
+            row-key="date"
+            :data="tableData"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
           >
-        </template>
-      </el-table-column>
-      <el-table-column fixed="right" label="操作" min-width="120">
-        <template #default="scope">
-          <el-button link type="primary" size="small" @click="editTask(scope.row)">编辑</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <!-- 分页 -->
-  <div class="demo-pagination-block">
-    <el-pagination
-      v-model:current-page="currentPage4"
-      v-model:page-size="pageSize4"
-      :page-sizes="[10, 20, 30, 50]"
-      :size="size"
-      :disabled="disabled"
-      :background="background"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+            <el-table-column type="selection" width="55" />
+            <el-table-column
+              prop="start_time"
+              label="开始时间"
+              sortable
+              width="180"
+              :formatter="(row) => formatTime(row.start_time)"
+            />
+            <el-table-column
+              prop="end_time"
+              label="结束时间"
+              sortable
+              width="180"
+              :formatter="(row) => formatTime(row.end_time)"
+            />
+            <el-table-column prop="name" label="任务名称" sortable width="180" />
+            <el-table-column
+              prop="tag"
+              label="类型"
+              width="120"
+              :filters="typeFilters"
+              :filter-method="filterType"
+            >
+              <template #default="scope">
+                <el-tag
+                  :type="getTypeTagType(scope.row.type)"
+                  disable-transitions
+                  >{{ getTypeName(scope.row.type) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="content" label="内容" sortable :formatter="formatter" />
+
+            <el-table-column
+              prop="tag"
+              label="状态"
+              width="100"
+              :filters="statusFilters"
+              :filter-method="filterStatus"
+            >
+              <template #default="scope">
+                <el-tag
+                  :type="scope.row.status === 0 ? 'warning' : 'success'"
+                  disable-transitions
+                  >{{ scope.row.status === 0 ? '未完成' : '已完成'}}</el-tag
+                >
+              </template>
+            </el-table-column>
+            <el-table-column fixed="right" label="操作" min-width="120">
+              <template #default="scope">
+                <el-button link type="primary" size="small" @click="editTask(scope.row)">编辑</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+          <!-- 分页 -->
+        <div class="demo-pagination-block">
+          <el-pagination
+            v-model:current-page="currentPage4"
+            v-model:page-size="pageSize4"
+            :page-sizes="[10, 20, 30, 50]"
+            :size="size"
+            :disabled="disabled"
+            :background="background"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
   </div>
-    <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑定时活动' : '新建定时活动'" size="50%" :with-header="true">
+    <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑定时提醒' : '新建定时提醒'" size="50%" :with-header="true">
     <el-form :model="form" label-width="auto" style="max-width: 600px">
-      <el-form-item label="任务名称">
+      <el-form-item label="提醒名称">
         <el-input v-model="form.name" />
       </el-form-item>
-      <el-form-item label="提醒">
+      <el-form-item label="提前">
         <el-input-number v-model="form.early_time" :min="0" :max="10" />
       </el-form-item>
       <el-form-item label="开始时间">
@@ -141,6 +168,22 @@
       <el-form-item label="内容">
         <el-input v-model="form.desc" type="textarea" />
       </el-form-item>
+      <el-form-item label="重复频率">
+        <el-select v-model="form.repeat_type" placeholder="请选择" style="width: 240px">
+          <el-option
+            v-for="item in repeatTypeOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="提醒方式">
+        <el-select v-model="form.notify_way" placeholder="请选择提醒方式" style="width: 240px">
+          <el-option :label="'站内信'" :value="0" />
+          <el-option :label="'邮件'" :value="1" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">提交</el-button>
         <el-button @click="drawerVisible = false">取消</el-button>
@@ -156,6 +199,7 @@ import router from "@/router";
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
+import { formatLocalDateTime, formatTime } from '@/utils/time'
 
 // 添加时区插件
 dayjs.extend(utc)
@@ -188,8 +232,16 @@ const form = reactive({
   delivery: false,
   type: 0,
   desc: '',
+  repeat_type: 'once',
 })
 
+const repeatTypeOptions = [
+  { value: 'once', label: '仅此一次' },
+  { value: 'daily', label: '每天一次' },
+  { value: 'weekly', label: '每周一次' },
+  { value: 'monthly', label: '每月一次' },
+  { value: 'yearly', label: '每年一次' }
+]
 
 const typeOptions = [
   { value: 0, label: '日程' },
@@ -263,9 +315,11 @@ const fetchTasks = async () => {
         content: item.content,
         type: item.type,
         status: item.code,
+        early_time: item.early_time,
         start_time: item.start_time,
         end_time: item.end_time,
-        date: item.create_time
+        date: item.create_time,
+        repeat_type: item.repeat_type || 'once',
       }))
       total.value = response.data.data.total
     }
@@ -276,14 +330,7 @@ const fetchTasks = async () => {
   }
 }
 
-// ------------------------时间戳格式化方法
-const formatTime = (isoString) => {
-  if (!isoString) return '--'
-  // 将UTC时间转换为本地时间
-  return dayjs(isoString).utc().local().format('YYYY-MM-DD HH:mm')
-}
-
-// -------------------------过滤方法
+// -----------------------------------------过滤方法
 const filterStatus = (value, row) => {
   return row.status === value
 }
@@ -291,7 +338,7 @@ const filterType = (value, row) => {
   return row.type === value
 }
 
-// -------------------------分页处理
+// -----------------------------------------分页处理
 const handleSizeChange = (newSize) => {
   pageSize.value = newSize 
   fetchTasks()
@@ -308,6 +355,9 @@ onMounted(() => {
 
 // -------------------------------------------新建任务
 const createTask = () => {
+  resetForm()                 // 清空表单数据
+  isEditMode.value = false    // 退出编辑模式
+  editingTaskId.value = null  // 清除编辑ID
   drawerVisible.value = true  // 打开抽屉
 }
 
@@ -329,6 +379,7 @@ const onSubmit = async () => {
       start_time: startTime,
       end_time: endTime,
       type: form.type,
+      repeat_type: form.repeat_type,
     }
 
     const token = sessionStorage.getItem('token')
@@ -370,7 +421,7 @@ const editTask = (row) => {
   // 分拆开始时间和结束时间
   const start = dayjs(row.start_time)
   const end = dayjs(row.end_time)
-
+  console.log(form);
   form.name = row.name
   form.early_time = row.early_time
   form.start_date = start.toDate()
@@ -379,6 +430,7 @@ const editTask = (row) => {
   form.end_time = end.toDate()
   form.type = row.type
   form.desc = row.content
+  form.repeat_type = row.repeat_type || 'once'
 
   drawerVisible.value = true
 }
@@ -395,28 +447,9 @@ const resetForm = () => {
   form.desc = ''
   isEditMode.value = false
   editingTaskId.value = null
+  form.repeat_type = 'once'
 }
 
-// 格式化日期时间为带有时区的时间字符串
-const formatLocalDateTime = (date, time) => {
-  // dayjs 对象转 Date
-  const d = dayjs(date).toDate()
-  const t = dayjs(time).toDate()
-
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(t.getHours()).padStart(2, '0')
-  const minutes = String(t.getMinutes()).padStart(2, '0')
-  const seconds = String(t.getSeconds()).padStart(2, '0')
-
-  const timezoneOffset = d.getTimezoneOffset()
-  const offsetHours = Math.abs(Math.floor(timezoneOffset / 60)).toString().padStart(2, '0')
-  const offsetMinutes = Math.abs(timezoneOffset % 60).toString().padStart(2, '0')
-  const offsetSign = timezoneOffset > 0 ? '-' : '+'
-
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offsetSign}${offsetHours}:${offsetMinutes}`
-}
 
 // -------------------------------------------------删除函数
 const handleSelectionChange = (selection) => {
@@ -525,10 +558,6 @@ const disableBeforeStartMinutes = (hour) => {
 
 
 <style scoped>
-.el-pagination {
-  margin-top: 20px;
-  justify-content: flex-end;
-}
 
 .scrollbar-demo-item {
   display: flex;
@@ -540,5 +569,9 @@ const disableBeforeStartMinutes = (hour) => {
   border-radius: 4px;
   background: var(--el-color-primary-light-9);
   color: var(--el-color-primary);
+}
+
+.card-wrapper {
+  height: calc(100vh - 120px);
 }
 </style>

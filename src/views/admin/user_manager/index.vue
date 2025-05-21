@@ -1,75 +1,68 @@
 <template>
   <div class="p-6">
-    <el-card>
-      <!-- 搜索与操作 -->
+    <div class="card-wrapper">
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
       <div class="flex justify-between mb-4">
         <div class="flex gap-2 items-center">
           <el-input v-model="search.username" placeholder="请输入用户名" clearable style="width: 160px" />
           <el-button type="primary" :loading="loading" @click="onSearch">搜索</el-button>
           <el-button @click="resetSearch">重置</el-button>
           <el-button type="success" @click="openDrawer()">添加用户</el-button>
-          <!-- <el-button plain type="danger" :disabled="!multipleSelection.length" @click="batchRemove">批量删除</el-button> -->
         </div>
       </div>
 
       <!-- 表格 -->
-      <el-table
-        :data="tableData"
-        stripe
-        border
-        row-key="id"
-        v-loading="loading"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="50" />
-        <el-table-column label="用户名" prop="username" />
-        <el-table-column label="联系方式" prop="phone" />
-        <el-table-column label="邮箱" prop="email" />
-        <el-table-column label="角色" prop="role">
-          <template #default="scope">
-            <span>{{ scope.row.role === 1 ? '普通用户' : '管理员' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="180">
-          <template #default="scope">
-            <div class="flex gap-2">
-              <el-button
-                size="small"
-                type="primary"
-                @click="scope.row.username !== 'admin' && openDrawer(scope.row)"
-                :disabled="scope.row.username === 'admin'">
-                编辑
-              </el-button>
-              <el-button
-                size="small"
-                type="warning"
-                @click="scope.row.username !== 'admin' && resetPassword(scope.row.id)"
-                :disabled="scope.row.username === 'admin'">
-                重置密码
-              </el-button>
-              <!-- <el-button
-                size="small"
-                type="danger"
-                @click="scope.row.username !== 'admin' && remove(scope.row.id)"
-                :disabled="scope.row.username === 'admin'">
-                删除
-              </el-button> -->
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <el-pagination
-        class="mt-4"
-        layout="prev, pager, next"
-        :total="total"
-        :page-size="pageSize"
-        :current-page="page"
-        @current-change="handlePageChange"
-      />
+      <div style="flex: 1; overflow: auto;">
+        <el-table
+          :data="tableData"
+          stripe
+          row-key="id"
+          v-loading="loading"
+          @selection-change="handleSelectionChange"
+          style="min-width: 100%"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column label="用户名" prop="username" />
+          <el-table-column label="联系方式" prop="phone" />
+          <el-table-column label="邮箱" prop="email" />
+          <el-table-column label="角色" prop="role">
+            <template #default="scope">
+              <span>{{ scope.row.role === 1 ? '普通用户' : '管理员' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180">
+            <template #default="scope">
+              <div class="flex gap-2">
+                <el-button
+                  size="small"
+                  type="primary"
+                  @click="scope.row.username !== 'admin' && openDrawer(scope.row)"
+                  :disabled="scope.row.username === 'admin'">
+                  编辑
+                </el-button>
+                <el-button
+                  size="small"
+                  type="warning"
+                  @click="scope.row.username !== 'admin' && resetPassword(scope.row.id)"
+                  :disabled="scope.row.username === 'admin'">
+                  重置密码
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
-
+    <!-- 分页 -->
+    <el-pagination
+      class="mt-4"
+      layout="prev, pager, next"
+      :total="total"
+      :page-size="pageSize"
+      :current-page="page"
+      @current-change="handlePageChange"
+    />
+  </div>
     <!-- 抽屉 -->
     <el-drawer
       v-model="drawerVisible"
@@ -287,3 +280,10 @@ onMounted(() => {
   fetchData()
 })
 </script>
+
+
+<style scoped>
+.card-wrapper {
+  height: calc(100vh - 120px); /* 调整这个值来预留 header、padding、分页高度 */
+}
+</style>

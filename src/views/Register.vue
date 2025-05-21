@@ -7,6 +7,9 @@
         <el-form-item label="用户名:" prop="username">
           <el-input v-model="form.user_name" class="styled-input" />
         </el-form-item>
+        <el-form-item label="邮箱:" prop="email">
+          <el-input v-model="form.user_name" class="styled-input" />
+        </el-form-item>
         <el-form-item label="密码: " prop="password">
             <el-input v-model="form.password" :type="passwordType" class="styled-input" />
             <svg-icon :icon="passwordType === 'password' ? 'eye' : 'eye-open'" @click="changeType" class="password-toggle-icon" />

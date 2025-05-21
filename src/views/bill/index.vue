@@ -1,104 +1,111 @@
 <template>
   <div>
-    <!-- 上传区域 -->
-    <el-row class="mb-4" type="flex" justify="start">
-      <el-col :span="3">
-        <el-upload
-          :before-upload="beforeUploadWeChat"
-          :http-request="customRequest"
-          :show-file-list="false"
-        >
-          <el-button type="success">上传微信账单</el-button>
-        </el-upload>
-      </el-col>
-      <el-col :span="3">
-        <el-upload
-          :before-upload="beforeUploadAliPay"
-          :http-request="customRequest"
-          :show-file-list="false"
-        >
-          <el-button type="primary">上传支付宝账单</el-button>
-        </el-upload>
-      </el-col>
-    </el-row>
+    <div class="card-wrapper">
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
+      <!-- 上传区域 -->
+      <el-row class="mb-4" type="flex" justify="start">
+        <el-col :span="3">
+          <el-upload
+            :before-upload="beforeUploadWeChat"
+            :http-request="customRequest"
+            :show-file-list="false"
+          >
+            <el-button type="success">上传微信账单</el-button>
+          </el-upload>
+        </el-col>
+        <el-col :span="3">
+          <el-upload
+            :before-upload="beforeUploadAliPay"
+            :http-request="customRequest"
+            :show-file-list="false"
+          >
+            <el-button type="primary">上传支付宝账单</el-button>
+          </el-upload>
+        </el-col>
+      </el-row>
 
-    <!-- 搜索区域 -->
-    <el-row class="mb-4" type="flex" justify="start">
-      <el-col :span="6">
-        <el-input v-model="searchParams.keyword" placeholder="按交易对方或备注检索" clearable />
-      </el-col>
-      <el-col :span="6">
-        <el-select v-model="searchParams.transactionType" placeholder="交易类型" clearable>
-          <el-option label="收入" value="收入" />
-          <el-option label="支出" value="支出" />
-        </el-select>
-      </el-col>
-      <el-col :span="6">
-        <el-date-picker
-          v-model="searchParams.dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          style="width: 100%"
-        />
-      </el-col>
-      <el-col :span="6">
-        <el-button @click="fetchBillList" type="primary">搜索</el-button>
-      </el-col>
-    </el-row>
+      <!-- 搜索区域 -->
+      <el-row class="mb-4" type="flex" justify="start">
+        <el-col :span="6">
+          <el-input v-model="searchParams.keyword" placeholder="按交易对方或备注检索" clearable />
+        </el-col>
+        <el-col :span="6">
+          <el-select v-model="searchParams.transactionType" placeholder="交易类型" clearable>
+            <el-option label="收入" value="收入" />
+            <el-option label="支出" value="支出" />
+          </el-select>
+        </el-col>
+        <el-col :span="6">
+          <el-date-picker
+            v-model="searchParams.dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            style="width: 100%"
+          />
+        </el-col>
+        <el-col :span="6">
+          <el-button @click="fetchBillList" type="primary">搜索</el-button>
+        </el-col>
+      </el-row>
 
-    <el-row class="mb-4" type="flex" justify="start">
-      <el-col :span="6">
-        <el-input-number
-          v-model="searchParams.minAmount"
-          placeholder="最小金额"
-          :min="0"
-          style="width: 100%"
-        />
-      </el-col>
-      <el-col :span="6">
-        <el-input-number
-          v-model="searchParams.maxAmount"
-          placeholder="最大金额"
-          :min="0"
-          style="width: 100%"
-        />
-      </el-col>
-      <el-col :span="6">
-        <el-button @click="resetSearch" type="info">重置</el-button>
-      </el-col>
-    </el-row>
+      <el-row class="mb-4" type="flex" justify="start">
+        <el-col :span="6">
+          <el-input-number
+            v-model="searchParams.minAmount"
+            placeholder="最小金额"
+            :min="0"
+            style="width: 100%"
+          />
+        </el-col>
+        <el-col :span="6">
+          <el-input-number
+            v-model="searchParams.maxAmount"
+            placeholder="最大金额"
+            :min="0"
+            style="width: 100%"
+          />
+        </el-col>
+        <el-col :span="6">
+          <el-button @click="resetSearch" type="info">重置</el-button>
+        </el-col>
+      </el-row>
 
-    <!-- 表格 -->
-    <el-table :data="tableData" style="width: 100%">
-      <el-table-column label="交易时间" prop="transactionTime" />
-      <el-table-column label="交易类型" prop="transactionType" />
-      <el-table-column label="交易对方" prop="counterparty" />
-      <el-table-column label="商品" prop="product" />
-      <el-table-column label="收/支" prop="incomeExpense" />
-      <el-table-column label="金额(元)" prop="amount" />
-      <el-table-column label="支付方式" prop="paymentMethod" />
-      <el-table-column label="当前状态" prop="status" />
-      <el-table-column label="交易单号" prop="transactionId" />
-      <el-table-column label="商户单号" prop="merchantId" />
-      <el-table-column label="备注" prop="remarks" />
-    </el-table>
-
-    <!-- 分页 -->
-    <el-pagination
-      class="mt-4"
-      :current-page="currentPage"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, prev, pager, next"
-      @current-change="handlePageChange"
-    />
+      <!-- 表格 -->
+      <div class="table-wrapper">
+        <el-table :data="tableData" style="width: 100%">
+          <el-table-column label="交易时间" prop="transactionTime" />
+          <el-table-column label="交易类型" prop="transactionType" />
+          <el-table-column label="交易对方" prop="counterparty" />
+          <el-table-column label="商品" prop="product" />
+          <el-table-column label="收/支" prop="incomeExpense" />
+          <el-table-column label="金额(元)" prop="amount" />
+          <el-table-column label="支付方式" prop="paymentMethod" />
+          <el-table-column label="当前状态" prop="status" />
+          <el-table-column label="交易单号" prop="transactionId" />
+          <el-table-column label="商户单号" prop="merchantId" />
+          <el-table-column label="备注" prop="remarks" />
+        </el-table>
+      </div>
+      </el-card>
+      <!-- 分页 -->
+      <el-pagination
+        class="mt-4"
+        :current-page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 30, 50]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 
@@ -227,14 +234,33 @@ const resetSearch = () => {
   fetchBillList();
 };
 
+// -------------------------------------------------分页大小变化
+const handleSizeChange = (size) => {
+  page.value = 1
+  pageSize.value = size
+  fetchData()
+}
+
 // 初始化加载
 onMounted(() => {
-  fetchBillList();
+  nextTick(() => {
+    fetchBillList();
+  });
 });
+
 </script>
 
 <style scoped>
 .el-row {
   margin-bottom: 10px;
+}
+
+.table-wrapper {
+  max-height: calc(100vh - 120px); /* 可根据需要调整高度 */
+  overflow-y: auto;
+}
+
+.card-wrapper {
+  height: calc(100vh - 120px); /* 调整这个值来预留 header、padding、分页高度 */
 }
 </style>

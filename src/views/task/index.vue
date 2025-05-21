@@ -1,76 +1,89 @@
 <template>
   <div>
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div style="display: flex; gap: 10px; flex-wrap: wrap">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索活动名称或内容"
-          clearable
-          @input="handleSearch"
-          style="width: 200px"
-        />
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          style="width: 240px"
-          unlink-panels
-          value-format="YYYY-MM-DD"
-        />
-        <el-select v-model="statusFilter" placeholder="活动状态" style="width: 120px" clearable>
-          <el-option label="未完成" :value="0" />
-          <el-option label="已完成" :value="1" />
-        </el-select>
-        <el-button type="primary" @click="drawerVisible = true">新建活动</el-button>
-      </div>
-    </div>
-
-    <!-- 固定高度卡片区域 + 分页 -->
-    <div class="task-container">
-      <template v-if="pagedTasks.length > 0">
-      <el-row :gutter="20">
-        <el-col v-for="task in pagedTasks" :key="task.id" :span="8" class="task-card">
-          <el-card shadow="hover">
-            <div class="card-header">
-              <span class="task-title">{{ task.name }}</span>
-              <el-tag :type="task.status === 0 ? 'warning' : 'success'" size="small">
-                {{ task.status === 0 ? '未完成' : '已完成' }}
-              </el-tag>
-              <el-tag v-if="isOverdue(task)" type="danger" size="small">逾期</el-tag>
-            </div>
-            <div class="task-content">{{ task.content }}</div>
-            <div class="task-footer">
-              <span class="task-date">{{ task.date }}</span>
-              <div>
-                <el-button link size="small" @click="viewTask(task)">编辑</el-button>
-                <el-button link size="small" @click="deleteTask(task)">删除</el-button>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-      </template>
-      <template v-else>
-        <div class="empty-state">
-          <el-empty description="暂无活动" />
+    <div class="card-wrapper">
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
+        <!-- 工具栏 -->
+        <div class="toolbar">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索活动名称或内容"
+              clearable
+              @input="handleSearch"
+              style="width: 200px"
+            />
+            <el-date-picker
+              v-model="dateRange"
+              type="daterange"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              style="width: 240px"
+              unlink-panels
+              value-format="YYYY-MM-DD"
+            />
+            <el-select v-model="statusFilter" placeholder="活动状态" style="width: 120px" clearable>
+              <el-option label="未完成" :value="0" />
+              <el-option label="已完成" :value="1" />
+            </el-select>
+            <el-button type="primary" @click="drawerVisible = true">新建活动</el-button>
+          </div>
         </div>
-      </template>
+        <!-- 固定高度卡片区域 + 分页 -->
+        <div class="task-container">
+          <template v-if="pagedTasks.length > 0">
+          <el-row :gutter="20">
+            <el-col v-for="task in pagedTasks" :key="task.id" :span="8" class="task-card">
+              <el-card shadow="hover">
+                <div class="card-header">
+                  <span class="task-title">{{ task.name }}</span>
+                    <el-tag :type="getTaskTagType(task)" size="small">
+                      {{ getTaskTagText(task) }}
+                    </el-tag>
+                </div>
+                <div class="task-content">{{ task.content }}</div>
+                <div class="task-footer">
+                  <span class="task-date">{{ task.date }}</span>
+                  <div>
+                    <el-tooltip
+                      v-if="!isTaskEditable(task)"
+                      :content="isOverdue(task) ? '活动已逾期，无法编辑' : '审核未通过，无法编辑'"
+                    >
+                      <el-button link size="small" disabled>编辑</el-button>
+                    </el-tooltip>
+                    <el-button
+                      v-else
+                      link
+                      size="small"
+                      @click="viewTask(task)"
+                    >
+                      编辑
+                    </el-button>
+                    <el-button link size="small" @click="deleteTask(task)">删除</el-button>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+          </template>
+          <template v-else>
+            <div class="empty-state">
+              <el-empty description="暂无活动" />
+            </div>
+          </template>
+        </div>
+      </el-card>
+      <!-- 分页器 -->
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[6, 12, 18]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="filteredTasks.length"
+        :background="true"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
-
-    <!-- 分页器 -->
-    <el-pagination
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      :page-sizes="[6, 12, 18]"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="filteredTasks.length"
-      :background="true"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
-
     <!-- 新建活动抽屉 -->
     <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑活动' : '新建活动'" direction="rtl" size="40%">
       <el-form :model="form" label-width="100px">
@@ -157,8 +170,8 @@ const form = reactive({
   status: false,
   desc: '',
   priority: 5,    // 新增
-  isNotify: false, // 新增，用布尔值表示
-  notifyWay: 0,   // 新增
+  isNotify: false, // 用布尔值表示
+  notifyWay: 0,
 })
 
 const dateRange = ref([])
@@ -179,6 +192,7 @@ const fetchTasks = async () => {
         name: item.title,
         content: item.content,
         status: item.code,
+        is_checked: item.is_checked,
         date: formatTimestamp(item.create_time),
         endTime: item.end_time,  // 新增，秒级时间戳
       }))
@@ -336,7 +350,26 @@ const viewTask = async (task) => {
 //-------------------------------------逾期判断函数
 const isOverdue = (task) => {
   const now = Math.floor(Date.now() / 1000)  // 当前时间（秒）
-  return task.status === 0 && task.endTime && now > task.endTime
+  return task.status === 0 && task.endTime && now > (task.endTime + 24* 60 *60) 
+}
+
+// --------------------------------------------任务状态判断
+const getTaskTagText = (task) => {
+  if (task.is_checked === 0) return '未审核'
+  if (task.is_checked === 2) return '审核不通过'
+  if (isOverdue(task)) return '已逾期'
+  return task.status === 0 ? '未完成' : '已完成'
+}
+
+const getTaskTagType = (task) => {
+  if (task.is_checked === 0) return 'info'
+  if (task.is_checked === 2) return 'danger'
+  if (isOverdue(task)) return 'danger'
+  return task.status === 0 ? 'warning' : 'success'
+}
+
+const isTaskEditable = (task) => {
+  return !isOverdue(task) && task.is_checked !== 2
 }
 
 </script>
@@ -402,5 +435,9 @@ const isOverdue = (task) => {
   align-items: center;
   height: 100%;
   padding: 80px 0;
+}
+
+.card-wrapper {
+  height: calc(100vh - 120px); /* 调整这个值来预留 header、padding、分页高度 */
 }
 </style>

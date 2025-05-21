@@ -1,23 +1,25 @@
 <template>
   <div class="photo-review-wall">
     <!-- 搜索区域 -->
-    <div class="search-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="请输入图片名或描述进行搜索"
-        class="search-input"
-        clearable
-        @clear="handleSearch"
-        @keyup.enter.native="handleSearch"
-      >
-        <template #append>
-          <el-button icon="el-icon-search" @click="handleSearch">搜索</el-button>
-        </template>
-      </el-input>
-    </div>
+    <div class="card-wrapper">
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
+      <div class="search-bar">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="请输入图片名或描述进行搜索"
+          class="search-input"
+          clearable
+          @clear="handleSearch"
+          @keyup.enter.native="handleSearch"
+        >
+          <template #append>
+            <el-button icon="el-icon-search" @click="handleSearch">搜索</el-button>
+          </template>
+        </el-input>
+      </div>
 
-    <!-- 图片展示区域 -->
-    <el-row :gutter="20">
+      <!-- 图片展示区域 -->
+      <el-row :gutter="20">
       <el-col
         v-for="(photo, index) in photos"
         :key="photo.url"
@@ -49,20 +51,21 @@
           </div>
         </el-card>
       </el-col>
-    </el-row>
-
-    <!-- 分页器 -->
-    <div class="pagination">
-      <el-pagination
-        background
-        layout="prev, pager, next, sizes, total"
-        :total="total"
-        :page-size="pageSize"
-        :current-page="currentPage"
-        :page-sizes="[8, 16, 24]"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
+      </el-row>
+      </el-card>
+      <!-- 分页器 -->
+      <div class="pagination">
+        <el-pagination
+          background
+          layout="prev, pager, next, sizes, total"
+          :total="total"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          :page-sizes="[8, 16, 24]"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -213,9 +216,9 @@ fetchImage()
 </script>
 
 <style scoped>
-.photo-review-wall {
+/* .photo-review-wall {
   padding: 20px;
-}
+} */
 .search-bar {
   margin-bottom: 20px;
 }
@@ -261,5 +264,9 @@ fetchImage()
 .pagination {
   margin-top: 20px;
   text-align: center;
+}
+
+.card-wrapper {
+  height: calc(100vh - 160px); /* 调整这个值来预留 header、padding、分页高度 */
 }
 </style>

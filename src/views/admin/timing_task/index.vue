@@ -1,29 +1,54 @@
 <template>
   <div class="task-management-container">
     <!-- 操作按钮区域 -->
-    <div class="action-buttons">
-      <el-button 
-        type="success" 
-        @click="batchApproveTasks(true)" 
-        :disabled="selectedTasks.length === 0"
-      >
-        批量通过
-      </el-button>
-      <el-button 
-        type="danger" 
-        @click="batchApproveTasks(false)" 
-        :disabled="selectedTasks.length === 0"
-      >
-        批量拒绝
-      </el-button>
-      <el-button 
-        type="warning" 
-        @click="deleteSelectedTasks" 
-        :disabled="selectedTasks.length === 0"
-      >
-        批量删除
-      </el-button>
-    </div>
+    <div class="card-wrapper">
+    <el-card style="height: 100%; display: flex; flex-direction: column;">
+      <!-- 工具栏 -->
+      <div class="toolbar" style="margin-bottom: 10px;">
+        <!-- 搜索区域 -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索活动名称或内容"
+            clearable
+            @input="handleSearch"
+            style="width: 200px"
+          />
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            style="width: 240px"
+            unlink-panels
+            value-format="YYYY-MM-DD"
+          />
+        </div>
+      </div>
+      <!-- 按钮 -->
+      <div class="action-buttons">
+        <el-button 
+          type="success" 
+          @click="batchApproveTasks(true)" 
+          :disabled="selectedTasks.length === 0"
+        >
+          批量通过
+        </el-button>
+        <el-button 
+          type="danger" 
+          @click="batchApproveTasks(false)" 
+          :disabled="selectedTasks.length === 0"
+        >
+          批量拒绝
+        </el-button>
+        <el-button 
+          type="warning" 
+          @click="deleteSelectedTasks" 
+          :disabled="selectedTasks.length === 0"
+        >
+          批量删除
+        </el-button>
+      </div>
 
     <!-- 任务表格 -->
     <el-table
@@ -107,24 +132,25 @@
           </template>
         </el-table-column>
     </el-table>
-
+    </el-card>
     <!-- 分页 -->
-    <div class="pagination-block">
+    <!-- <div class="pagination-block"> -->
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 30, 50]"
         layout="total, sizes, prev, pager, next, jumper"
+        :background="true"
         :total="total"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
+    <!-- </div> -->
     </div>
-
     <!-- 新建/编辑任务抽屉（保留原有逻辑） -->
-    <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑任务' : '新建任务'" size="50%">
+    <!-- <el-drawer v-model="drawerVisible" :title="isEditMode ? '编辑任务' : '新建任务'" size="50%"> -->
       <!-- 表单内容保持不变 -->
-    </el-drawer>
+    <!-- </el-drawer> -->
   </div>
 </template>
 
@@ -340,10 +366,10 @@ onMounted(() => {
 })
 </script>
 <style scoped>
-.el-pagination {
+/* .el-pagination {
   margin-top: 20px;
   justify-content: flex-end;
-}
+} */
 
 .scrollbar-demo-item {
   display: flex;
@@ -355,5 +381,9 @@ onMounted(() => {
   border-radius: 4px;
   background: var(--el-color-primary-light-9);
   color: var(--el-color-primary);
+}
+
+.card-wrapper {
+  height: calc(100vh - 140px); /* 调整这个值来预留 header、padding、分页高度 */
 }
 </style>

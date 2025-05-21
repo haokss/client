@@ -1,38 +1,44 @@
 <template>
   <div class="photo-wall">
-    <el-upload
-      class="upload-demo"
-      :action="uploadAction"
-      :on-success="handleUploadSuccess"
-      :before-upload="beforeUpload"
-      :show-file-list="false"
-      :headers="uploadHeaders"
-    >
-      <el-button type="primary">上传照片</el-button>
-    </el-upload>
+    <div class="card-wrapper">
 
-    <!-- 照片展示墙 -->
-    <el-row :gutter="20">
-      <el-col
-        v-for="(photo, index) in photos"
-        :key="index"
-        :xs="24" :sm="12" :md="8" :lg="6" :xl="4"
-      >
-        <el-card class="photo-card">
-          <el-image
-            :src="photo.url"
-            fit="cover"
-            class="photo-image"
-            :preview-src-list="previewList"
-            :initial-index="index"
-          />
-          <div class="photo-info">
-            <span class="photo-title">{{ photo.title }}</span>
-            <span class="photo-description">{{ photo.description }}</span>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+      <el-card style="height: 100%; display: flex; flex-direction: column;">
+        <el-upload
+          class="upload-demo"
+          :action="uploadAction"
+          :on-success="handleUploadSuccess"
+          :before-upload="beforeUpload"
+          :show-file-list="false"
+          :headers="uploadHeaders"
+        >
+          <el-button type="primary">上传照片</el-button>
+        </el-upload>
+
+        <!-- 照片展示墙 -->
+        <el-row :gutter="20">
+          <el-col
+            v-for="(photo, index) in photos"
+            :key="index"
+            :xs="24" :sm="12" :md="8" :lg="6" :xl="4"
+          >
+            <el-card class="photo-card">
+              <el-image
+                :src="photo.url"
+                fit="cover"
+                class="photo-image"
+                :preview-src-list="previewList"
+                :initial-index="index"
+              />
+              <div class="photo-info">
+                <span class="photo-title">{{ photo.title }}</span>
+                <span class="photo-description">{{ photo.description }}</span>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+      </el-card>
+    </div>
+
   </div>
 </template>
 
@@ -159,5 +165,9 @@ initBaseList()
 .photo-description {
   font-size: 14px;
   color: #666;
+}
+
+.card-wrapper {
+  height: calc(100vh - 140px); /* 调整这个值来预留 header、padding、分页高度 */
 }
 </style>
